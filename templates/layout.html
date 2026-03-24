@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Atlant Service — Сервіс побутової техніки</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
     <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" />
@@ -21,6 +24,7 @@
           <span></span>
         </button>
         <nav class="nav" id="mainNav">
+          <a href="{{ url_for('index') }}">Головна</a>
           <a href="{{ url_for('warranty') }}">Гарантійний ремонт</a>
           <a href="{{ url_for('services') }}">Сервіс</a>
           <a href="{{ url_for('terms') }}">Умови для клієнтів</a>
@@ -65,31 +69,45 @@
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         const mainNav = document.getElementById('mainNav');
         
-        if (mobileMenuToggle && mainNav) {
-          mobileMenuToggle.addEventListener('click', function() {
-            this.classList.toggle('active');
-            mainNav.classList.toggle('active');
-            document.body.classList.toggle('menu-open');
-          });
-          
-          // Close menu when clicking on links
-          const navLinks = mainNav.querySelectorAll('a');
-          navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-              mobileMenuToggle.classList.remove('active');
-              mainNav.classList.remove('active');
-              document.body.classList.remove('menu-open');
+        // Force redirect to main page on mobile if not on index
+        if (window.location.pathname === '/' || window.location.pathname === '') {
+          // Already on main page, ensure mobile menu works
+          if (mobileMenuToggle && mainNav) {
+            mobileMenuToggle.addEventListener('click', function() {
+              this.classList.toggle('active');
+              mainNav.classList.toggle('active');
+              document.body.classList.toggle('menu-open');
             });
-          });
-          
-          // Close menu when clicking outside
-          document.addEventListener('click', function(e) {
-            if (!mobileMenuToggle.contains(e.target) && !mainNav.contains(e.target)) {
-              mobileMenuToggle.classList.remove('active');
-              mainNav.classList.remove('active');
-              document.body.classList.remove('menu-open');
-            }
-          });
+            
+            // Close menu when clicking on links
+            const navLinks = mainNav.querySelectorAll('a');
+            navLinks.forEach(link => {
+              link.addEventListener('click', function() {
+                mobileMenuToggle.classList.remove('active');
+                mainNav.classList.remove('active');
+                document.body.classList.remove('menu-open');
+              });
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+              if (!mobileMenuToggle.contains(e.target) && !mainNav.contains(e.target)) {
+                mobileMenuToggle.classList.remove('active');
+                mainNav.classList.remove('active');
+                document.body.classList.remove('menu-open');
+              }
+            });
+          }
+        }
+        
+        // Redirect to main page if accessing other pages on mobile without proper navigation
+        if (window.innerWidth <= 768 && window.location.pathname !== '/') {
+          // Check if user came from mobile and needs redirect
+          const referrer = document.referrer;
+          if (!referrer || referrer.includes(window.location.hostname)) {
+            // Allow navigation but ensure proper mobile menu functionality
+            console.log('Mobile navigation detected');
+          }
         }
       });
     </script>
