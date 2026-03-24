@@ -92,10 +92,11 @@
 </div>
 
 <script>
-  // Initialize mobile menu functionality
-  document.addEventListener('DOMContentLoaded', function() {
-    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-    const mainNav = document.getElementById('mainNav');
+  const servicesData = {{ services|tojson|safe }};
+  const pricesData = {{ prices|tojson|safe }};
+  const brandsData = {{ brands|tojson|safe }};
+
+  function openModal(serviceId) {
     const service = servicesData.find(function(s) { return s.id === serviceId; });
     if (!service) return;
 
