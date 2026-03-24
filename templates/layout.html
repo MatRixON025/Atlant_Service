@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atlant Service — Сервіс побутової техніки</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" />
+  </head>
+  <body>
+    {% if not hide_header %}
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/">
+          <img src="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" alt="Atlant Service" class="brand-logo" />
+          Atlant Service
+        </a>
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Відкрити меню">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <nav class="nav" id="mainNav">
+          <a href="{{ url_for('warranty') }}">Гарантійний ремонт</a>
+          <a href="{{ url_for('services') }}">Сервіс</a>
+          <a href="{{ url_for('terms') }}">Умови для клієнтів</a>
+          <a href="{{ url_for('index') }}#about-contact">Контакти</a>
+        </nav>
+      </div>
+    </header>
+    {% endif %}
+
+    <main class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <section class="flash">
+        <div class="container">
+          {% for category, message in messages %}
+          <div class="flash__item flash__item--{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+      {% endwith %}
+
+      {% block body %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-text">
+            <p>© {{ current_year }} Atlant Service. Усі права захищені.</p>
+            <p>
+              <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+    
+    <script>
+      // Mobile menu toggle
+      document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mainNav = document.getElementById('mainNav');
+        
+        if (mobileMenuToggle && mainNav) {
+          mobileMenuToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            mainNav.classList.toggle('active');
+            document.body.classList.toggle('menu-open');
+          });
+          
+          // Close menu when clicking on links
+          const navLinks = mainNav.querySelectorAll('a');
+          navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+              mobileMenuToggle.classList.remove('active');
+              mainNav.classList.remove('active');
+              document.body.classList.remove('menu-open');
+            });
+          });
+          
+          // Close menu when clicking outside
+          document.addEventListener('click', function(e) {
+            if (!mobileMenuToggle.contains(e.target) && !mainNav.contains(e.target)) {
+              mobileMenuToggle.classList.remove('active');
+              mainNav.classList.remove('active');
+              document.body.classList.remove('menu-open');
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

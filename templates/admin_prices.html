@@ -1,0 +1,321 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<style>
+/* Admin Styles - Clean and Professional */
+.admin-sidebar-header {
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.admin-sidebar-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.admin-nav__link--logout {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  color: #dc3545;
+}
+
+.admin-nav__link--logout:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+/* Price Card Styles */
+.price-card--clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.price-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.price-preview {
+  margin-bottom: 16px;
+}
+
+.price-preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.price-preview-item:last-child {
+  border-bottom: none;
+}
+
+.price-preview-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.price-preview-value {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.price-card__action {
+  text-align: center;
+}
+
+.button--small {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+}
+
+/* Modal Styles */
+.modal__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.modal__service-desc {
+  color: var(--muted);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1000px) {
+  .admin-nav__link--logout {
+    margin-top: 8px;
+    border-top: none;
+    padding-top: 8px;
+  }
+}
+</style>
+
+<div class="admin-layout">
+  <!-- Left sidebar navigation -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-header">
+      <h3>Адмін-панель</h3>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_messages') }}" class="admin-nav__link {% if active_tab == 'messages' %}admin-nav__link--active{% endif %}">
+        Заявки
+      </a>
+      <a href="{{ url_for('admin_prices') }}" class="admin-nav__link {% if active_tab == 'prices' %}admin-nav__link--active{% endif %}">
+        Ціни послуг
+      </a>
+      <a href="{{ url_for('admin_logout') }}" class="admin-nav__link admin-nav__link--logout">
+        Вийти
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main class="admin-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="admin-flash">
+      {% for category, message in messages %}
+      <div class="admin-flash__item admin-flash__item--{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <section class="admin-section">
+      <h2>Управління цінами послуг</h2>
+      <p class="admin-section__desc">Натисніть на послугу для налаштування цін</p>
+
+      <div class="prices-grid">
+        {% for service in services %}
+        <div class="price-card price-card--clickable" onclick="openPriceModal('{{ service.id }}', '{{ service.title }}', '{{ service.desc }}')">
+          <div class="price-card__header">
+            <h3>{{ service.title }}</h3>
+            <p class="price-card__desc">{{ service.desc }}</p>
+          </div>
+          <div class="price-card__body">
+            <div class="price-preview">
+              <div class="price-preview-item">
+                <span class="price-preview-label">💡 Діагностика:</span>
+                <span class="price-preview-value">{{ prices.get('diagnostic_' + service.id, 300) }} грн</span>
+              </div>
+              <div class="price-preview-item">
+                <span class="price-preview-label">🔧 Негарантійні:</span>
+                <span class="price-preview-value">{{ prices.get('non_warranty_' + service.id, 0) > 0 and prices.get('non_warranty_' + service.id) + ' грн' or 'Не встановлено' }}</span>
+              </div>
+            </div>
+            <div class="price-card__action">
+              <button type="button" class="button button--primary button--small">
+                ⚙️ Налаштувати ціни
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Price Modal -->
+    <div class="modal" id="priceModal" aria-hidden="true">
+      <div class="modal__backdrop" data-close></div>
+      <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="priceModalTitle">
+        <button class="modal__close" type="button" data-close aria-label="Закрити">×</button>
+        <div class="modal__content">
+          <h3 id="priceModalTitle"></h3>
+          <p id="priceModalDesc" class="modal__service-desc"></p>
+          
+          <form method="post" id="priceModalForm">
+            <input type="hidden" id="serviceId" name="service_id" value="">
+            
+            <div class="modal__section">
+              <h4>💡 Діагностика</h4>
+              <div class="price-input-group">
+                <input 
+                  type="number" 
+                  id="modalDiagnostic" 
+                  name="diagnostic_price" 
+                  step="50" 
+                  min="0" 
+                  max="50000" 
+                  class="price-input"
+                  placeholder="300"
+                  required
+                >
+                <span class="price-currency">грн</span>
+              </div>
+            </div>
+
+            <div class="modal__section">
+              <h4>🔧 Негарантійні роботи</h4>
+              <div id="nonWarrantyCases" class="non-warranty-prices">
+                <!-- Will be populated by JavaScript with all cases -->
+              </div>
+            </div>
+
+            <div class="modal__actions">
+              <button type="button" class="button button--secondary" data-close>Скасувати</button>
+              <button type="submit" class="button button--primary">💾 Зберегти ціни</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// Service data
+const servicesData = {{ services | tojson }};
+const pricesData = {{ prices | tojson }};
+let currentServiceId = null;
+
+// Open price modal
+function openPriceModal(serviceId, title, desc) {
+  currentServiceId = serviceId;
+  
+  // Set modal title and description
+  document.getElementById('priceModalTitle').textContent = title;
+  document.getElementById('priceModalDesc').textContent = desc;
+  
+  // Find current service
+  const service = servicesData.find(s => s.id == serviceId);
+  
+  // Set current prices
+  const diagnosticKey = 'diagnostic_' + serviceId;
+  const diagnosticValue = pricesData[diagnosticKey] || 300;
+  document.getElementById('modalDiagnostic').value = diagnosticValue;
+  document.getElementById('modalDiagnostic').name = diagnosticKey;
+  document.getElementById('serviceId').value = serviceId;
+  
+  // Populate non-warranty cases
+  const nonWarrantyContainer = document.getElementById('nonWarrantyCases');
+  nonWarrantyContainer.innerHTML = '';
+  
+  if (service && service.non_warranty_cases && service.non_warranty_cases.length > 0) {
+    service.non_warranty_cases.forEach((caseItem, index) => {
+      const caseKey = 'case_' + serviceId + '_' + caseItem.id;
+      const casePrice = pricesData[caseKey] || caseItem.price || 0;
+      
+      const caseDiv = document.createElement('div');
+      caseDiv.className = 'price-item';
+      caseDiv.innerHTML = `
+        <label for="case_${serviceId}_${caseItem.id}" class="price-label">
+          ${caseItem.name}:
+        </label>
+        <div class="price-input-group">
+          <input 
+            type="text" 
+            id="case_${serviceId}_${caseItem.id}" 
+            name="case_${serviceId}_${caseItem.id}" 
+            value="${casePrice}" 
+            step="50" 
+            min="0" 
+            max="50000" 
+            class="price-input"
+            placeholder="${caseItem.price}"
+          >
+          <span class="price-currency">грн</span>
+        </div>
+      `;
+      nonWarrantyContainer.appendChild(caseDiv);
+    });
+  }
+  
+  // Update form action to use the correct endpoint
+  document.getElementById('priceModalForm').action = '/admin/prices';
+  
+  // Show modal
+  const modal = document.getElementById('priceModal');
+  modal.classList.add('modal--open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+// Close modal
+function closePriceModal() {
+  const modal = document.getElementById('priceModal');
+  modal.classList.remove('modal--open');
+  modal.setAttribute('aria-hidden', 'true');
+  currentServiceId = null;
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  // Close modal on backdrop click
+  document.querySelectorAll('[data-close]').forEach(element => {
+    element.addEventListener('click', closePriceModal);
+  });
+  
+  // Close modal on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closePriceModal();
+    }
+  });
+  
+  // Handle form submission
+  document.getElementById('priceModalForm').addEventListener('submit', function(e) {
+    // Add service ID to form data
+    const formData = new FormData(this);
+    formData.append('service_id', currentServiceId);
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = '⏳ Збереження...';
+    submitBtn.disabled = true;
+    
+    // Submit form normally
+    // The browser will handle the form submission
+  });
+});
+</script>
+{% endblock %}

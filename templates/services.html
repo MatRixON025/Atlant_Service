@@ -1,0 +1,339 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<section class="hero hero--services">
+  <div class="container">
+    <h1>Наші послуги</h1>
+    <p class="hero__subtitle">Професійний ремонт та обслуговування побутової техніки</p>
+    <div class="price-notice">
+      <strong>Зверніть увагу!</strong> Ціни можуть змінюватися.
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="grid">
+      {% for service in services %}
+      <div class="card">
+        <h3>{{ service.title }}</h3>
+        <p>{{ service.desc }}</p>
+        <button class="button button--secondary" type="button" data-service="{{ service.id }}">Докладніше</button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section section--alt">
+  <div class="container">
+    <h2>Ми авторизований сервісний центр</h2>
+    <p>Офіційні гарантійні ремонти для провідних брендів:</p>
+    <div class="brands-grid">
+      {% for brand_id, brand in brands.items() %}
+      <img src="{{ url_for('static', filename='img/brands/' + brand_id + '.png') }}" alt="{{ brand.name }}" class="brand-logo" data-brand="{{ brand_id }}">
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="brandModal" aria-hidden="true">
+  <div class="modal__backdrop" data-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="brandModalTitle">
+    <button class="modal__close" type="button" data-close aria-label="Закрити">×</button>
+    
+    <div class="modal__header">
+      <div class="modal__brand-info">
+        <img id="brandModalLogo" src="" alt="" class="modal__brand-logo">
+      </div>
+    </div>
+    
+    <div class="modal__content">
+      <div class="modal__section modal__section--contact">
+        <h4>Сервісна інформація</h4>
+        <p id="brandServiceInfo" class="modal__service-info"></p>
+      </div>
+      
+      <div class="modal__section modal__section--requirements">
+        <h4>Обов'язкові вимоги</h4>
+        <div class="modal__requirements">
+          <div class="requirement-item">
+            <span class="requirement-icon">📝</span>
+            <span>Гарантійний талон</span>
+          </div>
+          <div class="requirement-item">
+            <span class="requirement-icon">📸</span>
+            <span>Фото чека</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="serviceModal" aria-hidden="true">
+  <div class="modal__backdrop" data-close></div>
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal__close" type="button" data-close aria-label="Закрити">×</button>
+    <h3 id="modalTitle"></h3>
+    <p id="modalText"></p>
+    <div class="modal__section">
+      <h4>Опис послуги</h4>
+      <p id="modalServiceDesc"></p>
+    </div>
+    <div class="modal__section" id="nonWarrantyCasesSection" style="display:none;">
+      <h4>Вартість негарантійних робіт</h4>
+      <div class="price-notice">
+        <strong>Зверніть увагу!</strong> Ціни можуть змінюватися.
+      </div>
+      <div id="modalNonWarrantyCases" class="non-warranty-prices"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const servicesData = {{ services|tojson|safe }};
+  const pricesData = {{ prices|tojson|safe }};
+  const brandsData = {{ brands|tojson|safe }};
+
+  function openModal(serviceId) {
+    const service = servicesData.find(function(s) { return s.id === serviceId; });
+    if (!service) return;
+
+    const modal = document.getElementById('serviceModal');
+    document.getElementById('modalTitle').textContent = service.title;
+    document.getElementById('modalText').textContent = service.details;
+    document.getElementById('modalServiceDesc').textContent = service.desc;
+
+    // Показуємо ціни для негарантійних робіт
+    if (service.non_warranty_cases && service.non_warranty_cases.length > 0) {
+      const nonWarrantyCasesSection = document.getElementById('nonWarrantyCasesSection');
+      const nonWarrantyCasesContainer = document.getElementById('modalNonWarrantyCases');
+      nonWarrantyCasesContainer.innerHTML = '';
+
+      // Створюємо таблицю цін
+      const table = document.createElement('table');
+      table.className = 'price-table';
+      table.innerHTML = '<thead><tr><th>№ п/п</th><th>Виконувані роботи</th><th>Вартість</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+
+      // Додаємо діагностику як перший рядок
+      const diagnosticKey = 'diagnostic_' + serviceId;
+      const diagnosticPrice = pricesData[diagnosticKey] || 300;
+      const diagnosticRow = document.createElement('tr');
+      diagnosticRow.innerHTML = '<td>0</td><td>💡 Діагностика</td><td>' + diagnosticPrice + ' грн</td>';
+      tbody.appendChild(diagnosticRow);
+
+      service.non_warranty_cases.forEach(function(caseItem, index) {
+        const key = 'case_' + serviceId + '_' + caseItem.id;
+        const price = pricesData[key] || caseItem.price || 0;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + (index + 1) + '</td><td>' + caseItem.name + '</td><td>' + (price ? price : 'За запитом') + '</td>';
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+      nonWarrantyCasesContainer.appendChild(table);
+
+      nonWarrantyCasesSection.style.display = 'block';
+    }
+
+    modal.classList.add('modal--open');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('serviceModal');
+    modal.classList.remove('modal--open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  function openBrandModal(brandId) {
+    const brand = brandsData[brandId];
+    if (!brand) return;
+
+    const modal = document.getElementById('brandModal');
+    const serviceInfo = document.getElementById('brandServiceInfo');
+    const logoImg = document.getElementById('brandModalLogo');
+    const requirementsDiv = document.querySelector('.modal__requirements');
+
+    // Set brand information
+    serviceInfo.textContent = brand.service_info;
+    logoImg.src = "{{ url_for('static', filename='img/brands/') }}" + brandId + '.png';
+    logoImg.alt = brandId;
+
+    // Special requirements for specific brands
+    const specialBrands = ['daewoo', 'vestfrost', 'candy', 'haier', 'hansa', 'edler'];
+    const waterHeaterBrands = ['scandix', 'atlantic', 'round', 'gorenje', 'interlux'];
+    const quartzTermexBrands = ['quartz', 'termex'];
+    
+    if (specialBrands.includes(brandId)) {
+      requirementsDiv.innerHTML = `
+        <div class="requirement-item">
+          <span class="requirement-icon">📝</span>
+          <span>Ксерокопії чека і гарантійного талона</span>
+        </div>
+      `;
+    } else if (waterHeaterBrands.includes(brandId)) {
+      requirementsDiv.innerHTML = `
+        <div class="requirement-item">
+          <span class="requirement-icon">📝</span>
+          <span>Гарантійний талон</span>
+        </div>
+        <div class="requirement-item">
+          <span class="requirement-icon">📸</span>
+          <span>Фото чека</span>
+        </div>
+        <div class="requirement-item">
+          <span class="requirement-icon">🔥</span>
+          <span>Для водонагрівачів: обов'язкове регулярне ТО (профілактика), авторизованим сервісним центром, відповідно до умов в гарантійному талоні</span>
+        </div>
+      `;
+    } else if (quartzTermexBrands.includes(brandId)) {
+      requirementsDiv.innerHTML = `
+        <div class="requirement-item">
+          <span class="requirement-icon">📝</span>
+          <span>Гарантійний талон з печаткою магазину</span>
+        </div>
+        <div class="requirement-item">
+          <span class="requirement-icon">📸</span>
+          <span>Фото чека</span>
+        </div>
+        <div class="requirement-item">
+          <span class="requirement-icon">📞</span>
+          <span>З гарантійного ремонту звертатися на пряму в Atlant Service</span>
+        </div>
+      `;
+    } else {
+      requirementsDiv.innerHTML = `
+        <div class="requirement-item">
+          <span class="requirement-icon">📝</span>
+          <span>Гарантійний талон</span>
+        </div>
+        <div class="requirement-item">
+          <span class="requirement-icon">📸</span>
+          <span>Фото чека</span>
+        </div>
+      `;
+    }
+
+    modal.classList.add('modal--open');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeBrandModal() {
+    const modal = document.getElementById('brandModal');
+    modal.classList.remove('modal--open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  document.addEventListener('click', function(event) {
+    const serviceButton = event.target.closest('[data-service]');
+    if (serviceButton) {
+      openModal(serviceButton.getAttribute('data-service'));
+    }
+
+    const brandImg = event.target.closest('[data-brand]');
+    if (brandImg) {
+      openBrandModal(brandImg.getAttribute('data-brand'));
+    }
+
+    if (event.target.closest('[data-close]')) {
+      closeModal();
+      closeBrandModal();
+    }
+  });
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closeModal();
+      closeBrandModal();
+    }
+  });
+</script>
+
+<style>
+/* Modal styles for services page */
+.modal__header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+}
+
+.modal__brand-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal__brand-logo {
+  max-width: 180px;
+  height: auto;
+  max-height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+.modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal__section {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(29, 114, 184, 0.03);
+  border-left: 4px solid var(--primary);
+}
+
+.modal__section--contact {
+  border-left-color: #28a745;
+  background: rgba(40, 167, 69, 0.03);
+}
+
+.modal__section--warranty {
+  border-left-color: var(--primary);
+  background: rgba(29, 114, 184, 0.03);
+}
+
+.modal__section--requirements {
+  border-left-color: #ffc107;
+  background: rgba(255, 193, 7, 0.03);
+}
+
+.modal__section h4 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.modal__service-info {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.modal__warranty-list ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.modal__warranty-list li {
+  margin-bottom: 8px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.modal__warranty-list li:last-child {
+  margin-bottom: 0;
+}
+</style>
+
+{% endblock %}

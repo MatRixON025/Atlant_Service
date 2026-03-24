@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Умови для клієнтів — Atlant Service</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="/">
+          <img src="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" alt="Atlant Service" class="brand-logo" />
+          Atlant Service
+        </a>
+        <nav class="nav" id="mainNav">
+          <a href="{{ url_for('warranty') }}">Гарантійний ремонт</a>
+          <a href="{{ url_for('services') }}">Сервіс</a>
+          <a href="{{ url_for('terms') }}">Умови для клієнтів</a>
+          <a href="{{ url_for('index') }}#about-contact">Контакти</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="content">
+        <section class="hero hero--services">
+          <div class="container">
+            <h1>Умови для клієнтів</h1>
+            <p class="hero__subtitle">Будь ласка, ознайомте з умовами гарантійного та платного ремонту</p>
+          </div>
+        </section>
+
+        <section class="terms-section">
+          <div class="terms-content">
+            <h2>Умови для клієнтів</h2>
+            
+            <h3>СЦ може відмовити в гарантійному ремонті в разі:</h3>
+            <ul class="terms-list">
+              <li>неправильного заповнення документів;</li>
+              <li>наявності механічних пошкоджень виробу;</li>
+              <li>при наявності в ремонтованих виробах комах або продуктів життєдіяльності комах та домашніх тварин, а також залитих рідинами;</li>
+              <li>порушення збережності гарантійних пломб;</li>
+              <li>самостійного ремонту або зміни внутрішнього пристрою;</li>
+              <li>порушення правил експлуатації;</li>
+            </ul>
+            
+            <p class="terms-note">Гарантійний ремонт здійснюється за умови правильного і чіткого заповнення гарантійного талона.</p>
+            
+            <h3>Що не передбачає гарантія:</h3>
+            <ul class="terms-list">
+              <li>чистку відеоголовок і деталей ЛПМ, що стикаються з стрічкою в аудіо- та відеотехніці;</li>
+              <li>заміну витратних матеріалів (drum unit, тонер і т.п.) в офісній техніці;</li>
+              <li>заміну акумуляторів (в радіотелефонах, відеокамерах, плеерах і т.п.);</li>
+              <li>профілактику апаратури.</li>
+            </ul>
+            
+            <p class="terms-note">За бажанням клієнта такі дефекти можуть бути виправлені за окрему плату.</p>
+            
+            <h3>Відповідальність за упаковку</h3>
+            <p class="terms-note">У разі відсутності упаковки, сервіс не несе відповідальність за збережність зовнішнього вигляду апаратури.</p>
+            
+            <h3>Термін гарантії</h3>
+            <p class="terms-note">Термін гарантії на платний ремонт становить: <strong>3 (три) місяці</strong>.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p>&copy; {{ current_year }} Atlant Service. Всі права захищені.</p>
+        <p>
+          {{ contact.phone }}<br>
+          {{ contact.email }}<br>
+          {{ contact.address }}
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Simple initialization
+      document.addEventListener('DOMContentLoaded', function() {
+        // No navigation toggle needed
+      });
+    </script>
+  </body>
+</html>
