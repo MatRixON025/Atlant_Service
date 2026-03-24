@@ -1,35 +1,12 @@
-<!DOCTYPE html>
-<html lang="uk">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Умови для клієнтів — Atlant Service</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" />
-  </head>
-  <body>
-    <header class="site-header">
-      <div class="container">
-        <a class="brand" href="/">
-          <img src="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" alt="Atlant Service" class="brand-logo" />
-          Atlant Service
-        </a>
-        <nav class="nav" id="mainNav">
-          <a href="{{ url_for('warranty') }}">Гарантійний ремонт</a>
-          <a href="{{ url_for('services') }}">Сервіс</a>
-          <a href="{{ url_for('terms') }}">Умови для клієнтів</a>
-          <a href="{{ url_for('index') }}#about-contact">Контакти</a>
-        </nav>
-      </div>
-    </header>
+{% extends "layout.html" %}
 
-    <main class="content">
-        <section class="hero hero--services">
-          <div class="container">
-            <h1>Умови для клієнтів</h1>
-            <p class="hero__subtitle">Будь ласка, ознайомте з умовами гарантійного та платного ремонту</p>
-          </div>
-        </section>
+{% block body %}
+<section class="hero hero--services">
+  <div class="container">
+    <h1>Умови для клієнтів</h1>
+    <p class="hero__subtitle">Будь ласка, ознайомте з умовами гарантійного та платного ремонту</p>
+  </div>
+</section>
 
         <section class="terms-section">
           <div class="terms-content">
@@ -77,12 +54,4 @@
         </p>
       </div>
     </footer>
-
-    <script>
-      // Simple initialization
-      document.addEventListener('DOMContentLoaded', function() {
-        // No navigation toggle needed
-      });
-    </script>
-  </body>
-</html>
+{% endblock %}
