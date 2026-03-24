@@ -98,6 +98,39 @@
 </div>
 
 <script>
+  // Initialize mobile menu functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const mainNav = document.getElementById('mainNav');
+    
+    if (mobileMenuToggle && mainNav) {
+      mobileMenuToggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+        mainNav.classList.toggle('active');
+        document.body.classList.toggle('menu-open');
+      });
+      
+      // Close menu when clicking on links
+      const navLinks = mainNav.querySelectorAll('a');
+      navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+          mobileMenuToggle.classList.remove('active');
+          mainNav.classList.remove('active');
+          document.body.classList.remove('menu-open');
+        });
+      });
+      
+      // Close menu when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!mobileMenuToggle.contains(e.target) && !mainNav.contains(e.target)) {
+          mobileMenuToggle.classList.remove('active');
+          mainNav.classList.remove('active');
+          document.body.classList.remove('menu-open');
+        }
+      });
+    }
+  });
+
   const brandsData = {{ brands|tojson|safe }};
 
   function openBrandModal(brandId) {
