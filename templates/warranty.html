@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 
 {% block body %}
+<script src="{{ url_for('static', filename='js/page-editor-iframe.js') }}"></script>
 <section class="hero hero--services">
   <div class="container">
     <h1>Гарантійне обслуговування</h1>
@@ -18,24 +19,20 @@
     <div class="warranty-info-grid">
       <div class="warranty-card">
         <h3>Гарантійні випадки</h3>
-        <ul>
-          <li>Виявлення заводського браку (неохолодження, замерзання комірки)</li>
-          <li>Заміну компресора в межах гарантійного терміну</li>
-          <li>Гарантійний ремонт системи охолодження</li>
-          <li>Гарантійний ремонт при наявності чека та гарантійного талона (корешок обов'язково)</li>
-          <li>Заміна несправних компонентів за рахунок виробника</li>
-        </ul>
+        <p>Виявлення заводського браку (неохолодження, замерзання комірки)</p>
+        <p>Заміну компресора в межах гарантійного терміну</p>
+        <p>Гарантійний ремонт системи охолодження</p>
+        <p>Гарантійний ремонт при наявності чека та гарантійного талона (корешок обов'язково)</p>
+        <p>Заміна несправних компонентів за рахунок виробника</p>
       </div>
       
       <div class="warranty-card">
         <h3>Не гарантійні випадки</h3>
-        <ul>
-          <li>Пошкодження через нестабільність електроживлення або перепади напруги</li>
-          <li>Механічні пошкодження корпусу при транспортуванні</li>
-          <li>Проблеми, викликані неправильним встановленням або експлуатацією</li>
-          <li>Відсутність чека або гарантійного талона</li>
-          <li>Пошкодження через неправильне підключення</li>
-        </ul>
+        <p>Пошкодження через нестабільність електроживлення або перепади напруги</p>
+        <p>Механічні пошкодження корпусу при транспортуванні</p>
+        <p>Проблеми, викликані неправильним встановленням або експлуатацією</p>
+        <p>Відсутність чека або гарантійного талона</p>
+        <p>Пошкодження через неправильне підключення</p>
       </div>
     </div>
     
@@ -63,18 +60,16 @@
 </section>
 
 <!-- Modal for brand warranty info -->
-<div class="modal" id="brandModal" aria-hidden="true">
-  <div class="modal__backdrop" data-close></div>
-  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="brandModalTitle">
-    <button class="modal__close" type="button" data-close aria-label="Закрити">×</button>
-    
+<div class="modal" id="brandModal">
+  <div class="modal__content">
     <div class="modal__header">
       <div class="modal__brand-info">
         <img id="brandModalLogo" src="" alt="" class="modal__brand-logo">
       </div>
+      <button class="modal__close" type="button" onclick="closeBrandModal()" aria-label="Закрити">×</button>
     </div>
     
-    <div class="modal__content">
+    <div class="modal__body">
       <div class="modal__section modal__section--contact">
         <h4>Сервісна інформація</h4>
         <p id="brandServiceInfo" class="modal__service-info"></p>
@@ -171,13 +166,11 @@
 
     // Show modal
     modal.classList.add('modal--open');
-    modal.setAttribute('aria-hidden', 'false');
   }
 
   function closeBrandModal() {
     const modal = document.getElementById('brandModal');
     modal.classList.remove('modal--open');
-    modal.setAttribute('aria-hidden', 'true');
   }
 
   // Event listeners for modal closing
@@ -259,87 +252,6 @@
     max-height: 100%;
   }
 
-  /* Modal styles */
-  .modal__header {
-    text-align: center;
-    margin-bottom: 24px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid var(--border);
-  }
-
-  .modal__brand-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .modal__brand-logo {
-    max-width: 180px;
-    height: auto;
-    max-height: 120px;
-    object-fit: contain;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
-  }
-
-  .modal__content {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .modal__section {
-    padding: 16px;
-    border-radius: 12px;
-    background: rgba(29, 114, 184, 0.03);
-    border-left: 4px solid var(--primary);
-  }
-
-  .modal__section--contact {
-    border-left-color: #28a745;
-    background: rgba(40, 167, 69, 0.03);
-  }
-
-  .modal__section--warranty {
-    border-left-color: var(--primary);
-    background: rgba(29, 114, 184, 0.03);
-  }
-
-  .modal__section--requirements {
-    border-left-color: #ffc107;
-    background: rgba(255, 193, 7, 0.03);
-  }
-
-  .modal__section h4 {
-    margin: 0 0 12px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--fg);
-  }
-
-  .modal__service-info {
-    margin: 0;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--muted);
-    font-weight: 500;
-  }
-
-  .modal__warranty-list ul {
-    margin: 0;
-    padding-left: 16px;
-  }
-
-  .modal__warranty-list li {
-    margin-bottom: 8px;
-    color: var(--muted);
-    line-height: 1.4;
-  }
-
-  .modal__warranty-list li:last-child {
-    margin-bottom: 0;
-  }
-
   /* Warranty info grid styles */
   .warranty-info-grid {
     display: grid;
@@ -378,25 +290,6 @@
     margin-bottom: 0;
   }
 
-  .modal__requirements {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .requirement-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.9rem;
-    color: var(--muted);
-  }
-
-  .requirement-icon {
-    font-size: 1.2rem;
-    opacity: 0.8;
-  }
-
   .brand-card__name {
     margin-top: 1rem;
     font-weight: 600;
@@ -413,5 +306,37 @@
       font-size: 1.8rem;
     }
   }
+</style>
+<style>
+/* Убираем ВСЕ маркеры на всей странице */
+.warranty * {
+  list-style: none !important;
+  list-style-type: none !important;
+  list-style-image: none !important;
+  list-style-position: outside !important;
+}
+
+.warranty-card p {
+  margin: 8px 0;
+  padding-left: 0;
+  position: relative;
+  line-height: 1.5;
+}
+
+.warranty-card p:before {
+  display: none;
+}
+
+/* Дополнительные стили для гарантии */
+.warranty ul, .warranty li {
+  list-style: none !important;
+  list-style-type: none !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+.warranty ul li:before {
+  content: none !important;
+}
 </style>
 {% endblock %}

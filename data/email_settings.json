@@ -1,0 +1,8 @@
+{
+  "admin_email": "maksimgnuskov2@gmail.com",
+  "email_username": "maksimgnuskov2@gmail.com",
+  "email_password": "paer bnoj hjnk rnun",
+  "email_server": "smtp.gmail.com",
+  "email_port": 587,
+  "email_use_tls": true
+}

@@ -1,0 +1,546 @@
+{% extends "admin_base.html" %}
+
+{% block admin_content %}
+<section class="admin-section">
+  <h2>Бренди</h2>
+  <p class="admin-section__desc">Керуйте інформацією про бренди та їх сервісні центри.</p>
+  
+  <div class="admin-actions">
+    <button class="btn btn--primary" onclick="openAddBrandModal()">Додати новий бренд</button>
+  </div>
+  
+  {% if brands %}
+  <div class="brands-grid-modern">
+    {% for brand_id, brand_info in brands.items() %}
+    <div class="brand-card-modern" data-brand-id="{{ brand_id }}">
+      <div class="brand-card-header">
+        <div class="brand-logo-container">
+          <img src="{{ url_for('static', filename='img/brands/' + brand_id + '.png') }}" alt="{{ brand_id }}" class="brand-logo-small">
+          <h3 class="brand-name">{{ brand_id.upper() }}</h3>
+        </div>
+        <div class="brand-actions">
+          <button class="btn btn--small btn--edit" onclick="console.log('Клик по кнопке редактирования'); testEditBrand('{{ brand_id }}')">Редагувати</button>
+          <button class="btn btn--small btn--delete" onclick="console.log('Клик по кнопке удаления'); testDeleteBrand('{{ brand_id }}')">Видалити</button>
+        </div>
+      </div>
+      <div class="brand-info">
+        <p class="brand-service-info">{{ brand_info.service_info }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+    </svg>
+    <h3>Поки що немає брендів</h3>
+    <p>Додайте перший бренд, щоб почати роботу.</p>
+  </div>
+  {% endif %}
+</section>
+
+<!-- Модальное окно добавления/редактирования бренда -->
+<div class="modal" id="brandModal">
+  <div class="modal__content">
+    <div class="modal__header">
+      <h3 id="modalTitle">Додати бренд</h3>
+      <button class="modal__close" onclick="closeModal('brandModal')" type="button">&times;</button>
+    </div>
+    
+    <div class="modal__body">
+      <form id="brandForm">
+        <input type="hidden" id="originalBrandId" name="original_brand_id">
+        
+        <div class="form-group">
+          <label for="brand_id">ID бренду: *</label>
+          <input type="text" id="brand_id" name="brand_id" placeholder="напр. samsung" required>
+          <small class="form-help">Латинскими буквами, без пробелів (напр: samsung, lg, bosch)</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="brand_name">Назва бренду: *</label>
+          <input type="text" id="brand_name" name="brand_name" placeholder="напр. Samsung" required>
+          <small class="form-help">Відображається на сайті (напр: Samsung, LG, Bosch)</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="service_info">Сервісна інформація: *</label>
+          <textarea id="service_info" name="service_info" rows="3" placeholder="Телефон гарячої лінії Samsung: 0-800-503-081" required></textarea>
+          <small class="form-help">Контактна інформація сервісного центру</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="requirements">Обов'язкові вимоги:</label>
+          <textarea id="requirements" name="requirements" rows="4" placeholder="Гарантійний талон, Фото чека"></textarea>
+          <small class="form-help">Вимоги для гарантійного ремонту (кожна вимога з нового рядка)</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="logo_file">Логотип бренду:</label>
+          <input type="file" id="logo_file" name="logo_file" accept=".png,.jpg,.jpeg,.gif">
+          <small class="form-help">Завантажте новий логотип (PNG, JPG, GIF). Файл буде збережено як brand_id.png</small>
+          <div id="logo_preview">
+            <img id="logo_preview_img" src="" alt="" style="max-width: 100px; max-height: 60px; display: none; margin-top: 10px; border: 1px solid var(--border); border-radius: 4px;">
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal__footer">
+      <button type="button" class="btn btn--secondary" onclick="closeModal('brandModal')">Скасувати</button>
+      <button type="button" class="btn btn--primary" onclick="document.getElementById('brandForm').dispatchEvent(new Event('submit'))">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('brandModal');
+  const form = document.getElementById('brandForm');
+  
+  // Открыть модальное окно добавления
+  window.openAddBrandModal = function() {
+    document.getElementById('modalTitle').textContent = 'Додати бренд';
+    form.reset();
+    document.getElementById('originalBrandId').value = '';
+    document.getElementById('logo_preview_img').style.display = 'none';
+    openModal('brandModal');
+  };
+  
+  // Открыть модальное окно редактирования
+  window.testEditBrand = function(brandId) {
+    const brandCard = document.querySelector(`[data-brand-id="${brandId}"]`);
+    if (!brandCard) return;
+    
+    const serviceInfo = brandCard.querySelector('.brand-service-info')?.textContent || '';
+    
+    document.getElementById('modalTitle').textContent = 'Редагувати бренд';
+    document.getElementById('brand_id').value = brandId;
+    document.getElementById('brand_name').value = brandId.toUpperCase();
+    document.getElementById('service_info').value = serviceInfo;
+    document.getElementById('originalBrandId').value = brandId;
+    
+    const logo = document.getElementById('logo_preview_img');
+    logo.src = `/static/img/brands/${brandId}.png`;
+    logo.style.display = 'inline-block';
+    
+    openModal('brandModal');
+  };
+  
+  // Удалить бренд
+  window.testDeleteBrand = function(brandId) {
+    if (!confirm(`Видалити бренд ${brandId.toUpperCase()}?`)) return;
+    
+    fetch(`/admin/brands/delete/${brandId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Помилка: ' + data.error);
+      }
+    })
+    .catch(err => alert('Помилка: ' + err));
+  };
+  
+  // Обработка формы
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    // Если есть файл логотипа
+    if (document.getElementById('logo_file').files.length > 0) {
+      fetch('/admin/brands', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Помилка: ' + data.error);
+        }
+      });
+    } else {
+      // Отправляем как JSON
+      const data = {
+        brand_id: formData.get('brand_id'),
+        brand_name: formData.get('brand_name'),
+        service_info: formData.get('service_info'),
+        requirements: formData.get('requirements'),
+        original_brand_id: formData.get('original_brand_id')
+      };
+      
+      fetch('/admin/brands', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Помилка: ' + data.error);
+        }
+      });
+    }
+  });
+  
+  // Превью логотипа
+  document.getElementById('logo_file').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.getElementById('logo_preview_img');
+        preview.src = e.target.result;
+        preview.style.display = 'inline-block';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  
+  // Закрытие по Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeBrandModal();
+    }
+  });
+});
+</script>
+
+<style>
+.brands-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.brand-card-modern {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.brand-card-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.brand-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.brand-logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.brand-logo-small {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: white;
+  padding: 4px;
+  border: 1px solid var(--border);
+}
+
+.brand-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.brand-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.brand-info {
+  padding: 16px;
+  background: rgba(29, 114, 184, 0.03);
+  border-left: 4px solid var(--primary);
+  border-radius: 6px;
+}
+
+.brand-service-info {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.admin-actions {
+  margin: 24px 0;
+  display: flex;
+  gap: 12px;
+}
+
+/* Модальное окно */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal.modal--open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal__backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal__dialog {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+  position: relative;
+  z-index: 100000;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modal.modal--open .modal__dialog {
+  transform: scale(1);
+}
+
+.modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.modal__header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.modal__close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.modal__close:hover {
+  background: var(--danger);
+  color: white;
+}
+
+.modal__content {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(29, 114, 184, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-help {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn--primary:hover {
+  background: #1e7eb8;
+  transform: translateY(-1px);
+}
+
+.btn--secondary {
+  background: var(--muted);
+  color: white;
+}
+
+.btn--secondary:hover {
+  background: #6c757d;
+}
+
+.btn--small {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.btn--edit {
+  background: #28a745;
+  color: white;
+}
+
+.btn--edit:hover {
+  background: #218838;
+}
+
+.btn--delete {
+  background: #dc3545;
+  color: white;
+}
+
+.btn--delete:hover {
+  background: #c82333;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+
+.empty-state svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.empty-state p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .brands-grid-modern {
+    grid-template-columns: 1fr;
+  }
+  
+  .brand-card-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .brand-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .modal__dialog {
+    width: 95%;
+    margin: 20px;
+  }
+}
+</style>
+{% endblock %}

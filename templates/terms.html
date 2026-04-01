@@ -1,57 +1,179 @@
 {% extends "layout.html" %}
 
 {% block body %}
+<script src="{{ url_for('static', filename='js/page-editor-iframe.js') }}"></script>
+
+<style>
+/* Делаем хедер полностью залитым (непрозрачным) для этой страницы */
+.header {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header.scrolled {
+  background: #ffffff !important;
+}
+
+/* Убираем прозрачность только у контейнеров в хедере */
+.header .container {
+  background: transparent !important;
+}
+
+@media (max-width: 768px) {
+  .header {
+    background: #ffffff !important;
+  }
+  .header .container {
+    background: transparent !important;
+  }
+}
+</style>
+
 <section class="hero hero--services">
   <div class="container">
-    <h1>Умови для клієнтів</h1>
-    <p class="hero__subtitle">Будь ласка, ознайомте з умовами гарантійного та платного ремонту</p>
+    <h1 data-editable-id="terms-hero-title">{{ page_content.elements.get('terms-hero-title', 'Умови для клієнтів') }}</h1>
+    <p class="hero__subtitle" data-editable-id="terms-hero-subtitle">{{ page_content.elements.get('terms-hero-subtitle', 'Правила та умови надання послуг') }}</p>
   </div>
 </section>
 
-        <section class="terms-section">
-          <div class="terms-content">
-            <h2>Умови для клієнтів</h2>
-            
-            <h3>СЦ може відмовити в гарантійному ремонті в разі:</h3>
-            <ul class="terms-list">
-              <li>неправильного заповнення документів;</li>
-              <li>наявності механічних пошкоджень виробу;</li>
-              <li>при наявності в ремонтованих виробах комах або продуктів життєдіяльності комах та домашніх тварин, а також залитих рідинами;</li>
-              <li>порушення збережності гарантійних пломб;</li>
-              <li>самостійного ремонту або зміни внутрішнього пристрою;</li>
-              <li>порушення правил експлуатації;</li>
-            </ul>
-            
-            <p class="terms-note">Гарантійний ремонт здійснюється за умови правильного і чіткого заповнення гарантійного талона.</p>
-            
-            <h3>Що не передбачає гарантія:</h3>
-            <ul class="terms-list">
-              <li>чистку відеоголовок і деталей ЛПМ, що стикаються з стрічкою в аудіо- та відеотехніці;</li>
-              <li>заміну витратних матеріалів (drum unit, тонер і т.п.) в офісній техніці;</li>
-              <li>заміну акумуляторів (в радіотелефонах, відеокамерах, плеерах і т.п.);</li>
-              <li>профілактику апаратури.</li>
-            </ul>
-            
-            <p class="terms-note">За бажанням клієнта такі дефекти можуть бути виправлені за окрему плату.</p>
-            
-            <h3>Відповідальність за упаковку</h3>
-            <p class="terms-note">У разі відсутності упаковки, сервіс не несе відповідальність за збережність зовнішнього вигляду апаратури.</p>
-            
-            <h3>Термін гарантії</h3>
-            <p class="terms-note">Термін гарантії на платний ремонт становить: <strong>3 (три) місяці</strong>.</p>
-          </div>
-        </section>
+<section class="section section--alt">
+  <div class="container">
+    <div class="terms-content">
+      <h2 data-editable-id="terms-intro-title">{{ page_content.elements.get('terms-intro-title', 'Загальні положення') }}</h2>
+      <p data-editable-id="terms-intro-text">{{ page_content.elements.get('terms-intro-text', 'Ласкаво просимо до сервісного центру Atlant Service. Ми прагнемо надавати якісні послуги з ремонту побутової техніки.') }}</p>
+      
+      <h3 data-editable-id="terms-payment-title">{{ page_content.elements.get('terms-payment-title', 'Умови оплати') }}</h3>
+      <p data-editable-id="terms-payment-text">{{ page_content.elements.get('terms-payment-text', 'Оплата послуг здійснюється після виконання ремонту та здачі техніки клієнту.') }}</p>
+      
+      <h3>СЦ може відмовити в гарантійному ремонті в разі:</h3>
+      <div class="terms-grid">
+        <div class="terms-item">
+          <span class="terms-text">неправильного заповнення документів;</span>
+        </div>
+        <div class="terms-item">
+          <span class="terms-text">наявності механічних пошкоджень виробу;</span>
+        </div>
+        <div class="terms-item">
+          <span class="terms-text">при наявності в ремонтованих виробах комах або продуктів життєдіяльності комах та домашніх тварин, а також залитих рідинами;</span>
+        </div>
+        <div class="terms-item">
+          <span class="terms-text">порушення збережності гарантійних пломб;</span>
+        </div>
+        <div class="terms-item">
+          <span class="terms-text">самостійного ремонту або зміни внутрішнього пристрою;</span>
+        </div>
+        <div class="terms-item">
+          <span class="terms-text">порушення правил експлуатації;</span>
+        </div>
       </div>
-    </main>
+      
+      <p class="terms-note">Гарантійний ремонт здійснюється за умови правильного і чіткого заповнення гарантійного талона.</p>
+      
+      <h3>Що не передбачає гарантія:</h3>
+      <div class="terms-grid">
+        <div class="terms-item">
+          <span class="terms-text">чистку відеоголовок і деталей ЛПМ, що стикаються з стрічкою в аудіо- та відеотехніці;</span>
+        </div>
+        <div class="terms-item">
+          <span class="terms-text">заміну витратних матеріалів (drum unit, тонер і т.п.) в офісній техніці;</span>
+        </div>
+        <div class="terms-item">
+          <span class="terms-text">заміну акумуляторів (в радіотелефонах, відеокамерах, плеерах і т.п.);</span>
+        </div>
+        <div class="terms-item">
+          <span class="terms-text">профілактику апаратури.</span>
+        </div>
+      </div>
+      
+      <p class="terms-note">За бажанням клієнта такі дефекти можуть бути виправлені за окрему плату.</p>
+      
+      <h3>Відповідальність за упаковку</h3>
+      <p class="terms-note">У разі відсутності упаковки, сервіс не несе відповідальність за збережність зовнішнього вигляду апаратури.</p>
+      
+      <h3>Термін гарантії</h3>
+      <p class="terms-note">Термін гарантії на платний ремонт становить: <strong>3 (три) місяці</strong>.</p>
+    </div>
+  </div>
+</section>
 
-    <footer class="footer">
-      <div class="container">
-        <p>&copy; {{ current_year }} Atlant Service. Всі права захищені.</p>
-        <p>
-          {{ contact.phone }}<br>
-          {{ contact.email }}<br>
-          {{ contact.address }}
-        </p>
-      </div>
-    </footer>
+<style>
+.terms-content {
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.terms-content h2 {
+  color: #333;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.terms-content h3 {
+  color: #444;
+  margin-top: 30px;
+  margin-bottom: 15px;
+}
+
+.terms-grid {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.terms-item {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px;
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.terms-item:hover {
+  border-left-color: #0056b3;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.terms-text {
+  flex: 1;
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 500;
+  color: #333;
+}
+
+.terms-note {
+  background: #f8f9fa;
+  padding: 15px;
+  border-left: 4px solid #007bff;
+  margin: 20px 0;
+  font-style: italic;
+}
+
+/* Убираем ВСЕ маркеры на всей странице */
+.terms-content * {
+  list-style: none !important;
+  list-style-type: none !important;
+  list-style-image: none !important;
+  list-style-position: outside !important;
+}
+
+.terms-content p:before {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .terms-item {
+    padding: 12px;
+  }
+}
+</style>
 {% endblock %}

@@ -1,0 +1,687 @@
+{% extends "admin_base.html" %}
+
+{% block admin_content %}
+<section class="admin-section">
+  <h2>Візуальний редактор сторінок</h2>
+  <p class="admin-section__desc">Редагуйте контент сторінок в реальному часі з pixel-perfect точністю</p>
+  
+  <!-- Панель управления -->
+  <div class="editor-controls" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+    <div class="control-group">
+      <label for="page-select" style="display: block; margin-bottom: 5px; font-weight: 600;">Сторінка:</label>
+      <select id="page-select" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; min-width: 200px;">
+        <option value="index">Головна</option>
+        <option value="services">Послуги</option>
+        <option value="warranty">Гарантія</option>
+        <option value="vacancies">Вакансії</option>
+        <option value="terms">Умови для клієнтів</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label for="device-select" style="display: block; margin-bottom: 5px; font-weight: 600;">Пристрій:</label>
+      <select id="device-select" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;">
+        <option value="desktop">Desktop</option>
+        <option value="tablet">Tablet</option>
+        <option value="mobile">Mobile</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <button id="edit-mode-btn" class="btn btn--primary" style="padding: 8px 16px;">
+        <span id="mode-text">Режим редагування</span>
+      </button>
+    </div>
+    
+    <div class="control-group">
+      <button id="preview-btn" class="btn btn--secondary" style="padding: 8px 16px;">Нове вікно</button>
+    </div>
+    
+    <div class="control-group">
+      <button id="save-btn" class="btn btn--success" style="padding: 8px 16px;">💾 Зберегти</button>
+    </div>
+    
+    <div class="control-group">
+      <button id="publish-btn" class="btn btn--warning" style="padding: 8px 16px;">🚀 Опублікувати</button>
+    </div>
+  </div>
+  
+  <!-- Статус -->
+  <div id="status" style="padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 20px; display: none;">
+    <span id="status-text"></span>
+  </div>
+  
+  <!-- Основной редактор -->
+  <div class="editor-container" style="border: 2px solid #e1e5e9; border-radius: 12px; overflow: hidden; background: #fff; min-height: 600px;">
+    <!-- iframe с превью -->
+    <div id="iframe-wrapper" style="position: relative; width: 100%; height: 600px;">
+      <iframe id="preview-frame" src="" style="width: 100%; height: 100%; border: none; background: white;"></iframe>
+      
+      <!-- Наложение для режима редактирования -->
+      <div id="edit-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none;">
+        <!-- Элементы редактирования будут добавлены динамически -->
+      </div>
+    </div>
+  </div>
+  
+  <!-- Боковая панель свойств -->
+  <div id="properties-panel" style="position: fixed; right: -400px; top: 0; width: 400px; height: 100vh; background: white; border-left: 1px solid #e1e5e9; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; overflow-y: auto;">
+    <div style="padding: 20px;">
+      <h3 style="margin: 0 0 20px 0;">Властивості елемента</h3>
+      
+      <div id="element-properties">
+        <p style="color: #666;">Виберіть елемент для редагування</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Кнопка закрытия панели свойств -->
+  <button id="close-properties" style="position: fixed; right: 10px; top: 10px; width: 30px; height: 30px; border-radius: 50%; border: none; background: #f44336; color: white; cursor: pointer; display: none; z-index: 1001;">×</button>
+</section>
+
+<style>
+.editor-container {
+  transition: all 0.3s ease;
+}
+
+.editor-container.tablet #iframe-wrapper {
+  max-width: 768px;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.editor-container.mobile #iframe-wrapper {
+  max-width: 375px;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.editable-element {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editable-element:hover {
+  outline: 2px dashed #007bff;
+  outline-offset: 2px;
+}
+
+.editable-element.editing {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+  background: rgba(0, 123, 255, 0.05);
+}
+
+.inline-editor {
+  position: absolute;
+  background: white;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+  min-width: 200px;
+}
+
+.inline-editor textarea {
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  background: transparent;
+  width: 100%;
+  min-height: 20px;
+}
+
+.inline-editor .editor-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+.inline-editor button {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.inline-editor button:hover {
+  background: #f8f9fa;
+}
+
+.btn--success {
+  background: #28a745;
+  color: white;
+}
+
+.btn--warning {
+  background: #ffc107;
+  color: #212529;
+}
+
+.btn--success:hover {
+  background: #218838;
+}
+
+.btn--warning:hover {
+  background: #e0a800;
+}
+</style>
+
+<script>
+class PageEditor {
+  constructor() {
+    this.currentPage = 'index';
+    this.isEditMode = false;
+    this.currentDevice = 'desktop';
+    this.pageContent = {};
+    this.originalContent = {};
+    this.history = [];
+    this.historyIndex = -1;
+    this.selectedElement = null;
+    
+    this.init();
+  }
+  
+  init() {
+    this.loadPageContent();
+    this.setupEventListeners();
+    this.loadPage();
+  }
+  
+  async loadPageContent() {
+    try {
+      const response = await fetch('/api/pages-content');
+      this.pageContent = await response.json();
+      this.originalContent = JSON.parse(JSON.stringify(this.pageContent));
+    } catch (error) {
+      console.error('Error loading page content:', error);
+      this.showStatus('Помилка завантаження контенту', 'error');
+    }
+  }
+  
+  setupEventListeners() {
+    // Смена страницы
+    document.getElementById('page-select').addEventListener('change', (e) => {
+      this.currentPage = e.target.value;
+      this.loadPage();
+    });
+    
+    // Смена устройства
+    document.getElementById('device-select').addEventListener('change', (e) => {
+      this.currentDevice = e.target.value;
+      this.updateDeviceView();
+    });
+    
+    // Режим редактирования
+    document.getElementById('edit-mode-btn').addEventListener('click', () => {
+      this.toggleEditMode();
+    });
+    
+    // Предпросмотр в новом окне
+    document.getElementById('preview-btn').addEventListener('click', () => {
+      window.open('/' + this.currentPage, '_blank');
+    });
+    
+    // Сохранение
+    document.getElementById('save-btn').addEventListener('click', () => {
+      this.save();
+    });
+    
+    // Публикация
+    document.getElementById('publish-btn').addEventListener('click', () => {
+      this.publish();
+    });
+    
+    // Закрытие панели свойств
+    document.getElementById('close-properties').addEventListener('click', () => {
+      this.closePropertiesPanel();
+    });
+    
+    // Горячие клавиши
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+          case 'z':
+            e.preventDefault();
+            this.undo();
+            break;
+          case 'y':
+            e.preventDefault();
+            this.redo();
+            break;
+          case 's':
+            e.preventDefault();
+            this.save();
+            break;
+        }
+      }
+    });
+    
+    // Сообщения от iframe
+    window.addEventListener('message', (e) => {
+      this.handleIframeMessage(e);
+    });
+  }
+  
+  loadPage() {
+    console.log('Loading page:', this.currentPage);
+    const iframe = document.getElementById('preview-frame');
+    
+    // Для главной страницы используем корневой URL, для остальных - /page
+    let pagePath = this.currentPage;
+    if (this.currentPage === 'index') {
+      pagePath = ''; // корневой путь для главной страницы
+    } else {
+      pagePath = this.currentPage;
+    }
+    
+    const url = window.location.origin + '/' + pagePath + '?edit_mode=true';
+    console.log('Iframe URL:', url);
+    console.log('Window location origin:', window.location.origin);
+    
+    // Показываем индикатор загрузки
+    iframe.style.background = '#f0f0f0';
+    iframe.innerHTML = '<div style="padding: 20px; text-align: center;">Загрузка...</div>';
+    
+    iframe.src = url;
+    
+    iframe.onload = () => {
+      console.log('Iframe loaded successfully');
+      iframe.style.background = 'white';
+      
+      // Проверяем, не загрузилась ли страница ошибки
+      try {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const title = iframeDoc.title;
+        const bodyText = iframeDoc.body ? iframeDoc.body.innerText : '';
+        
+        if (title.includes('Not Found') || bodyText.includes('Not Found')) {
+          console.error('Iframe loaded "Not Found" page');
+          iframe.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Страница не найдена: ' + url + '<br><br>Проверьте, что сервер запущен и роут существует.</div>';
+          return;
+        }
+        
+        console.log('Iframe content looks good');
+      } catch (e) {
+        console.log('Cannot access iframe content (CORS restriction):', e);
+      }
+      
+      setTimeout(() => {
+        this.setupIframeCommunication();
+      }, 100);
+    };
+    
+    iframe.onerror = (error) => {
+      console.error('Iframe loading error:', error);
+      iframe.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Ошибка загрузки: ' + url + '</div>';
+    };
+  }
+  
+  setupIframeCommunication() {
+    console.log('Setting up iframe communication');
+    const iframe = document.getElementById('preview-frame');
+    const pageContent = this.pageContent[this.currentPage] || {};
+    console.log('Sending pageContent:', pageContent);
+    
+    iframe.contentWindow.postMessage({
+      type: 'init_editor',
+      pageContent: pageContent,
+      isEditMode: this.isEditMode
+    }, '*');
+  }
+  
+  updateDeviceView() {
+    const container = document.querySelector('.editor-container');
+    container.className = 'editor-container';
+    
+    if (this.currentDevice !== 'desktop') {
+      container.classList.add(this.currentDevice);
+    }
+  }
+  
+  toggleEditMode() {
+    this.isEditMode = !this.isEditMode;
+    const btn = document.getElementById('edit-mode-btn');
+    const modeText = document.getElementById('mode-text');
+    
+    if (this.isEditMode) {
+      btn.classList.add('btn--danger');
+      modeText.textContent = 'Режим перегляду';
+      this.showStatus('Режим редагування активовано', 'success');
+    } else {
+      btn.classList.remove('btn--danger');
+      modeText.textContent = 'Режим редагування';
+      this.showStatus('Режим перегляду', 'info');
+    }
+    
+    this.setupIframeCommunication();
+  }
+  
+  handleIframeMessage(e) {
+    const { type, data } = e.data;
+    
+    switch(type) {
+      case 'element_click':
+        this.handleElementClick(data);
+        break;
+      case 'element_edit':
+        this.handleElementEdit(data);
+        break;
+      case 'content_change':
+        this.handleContentChange(data);
+        break;
+    }
+  }
+  
+  handleElementClick(data) {
+    if (!this.isEditMode) return;
+    
+    this.selectedElement = data;
+    this.showPropertiesPanel(data);
+  }
+  
+  handleElementEdit(data) {
+    if (!this.isEditMode) return;
+    
+    const { elementId, currentText, rect } = data;
+    this.showInlineEditor(elementId, currentText, rect);
+  }
+  
+  handleContentChange(data) {
+    const { elementId, newText } = data;
+    
+    if (!this.pageContent[this.currentPage]) {
+      this.pageContent[this.currentPage] = { elements: {} };
+    }
+    
+    if (!this.pageContent[this.currentPage].elements) {
+      this.pageContent[this.currentPage].elements = {};
+    }
+    
+    this.pageContent[this.currentPage].elements[elementId] = newText;
+    
+    // Добавляем в историю
+    this.addToHistory();
+    
+    // Показываем статус автосохранения
+    this.showStatus('Автосбереження...', 'info');
+    
+    // Автосохранение через 2 секунды
+    clearTimeout(this.autoSaveTimeout);
+    this.autoSaveTimeout = setTimeout(() => {
+      this.autoSave();
+    }, 2000);
+  }
+  
+  showInlineEditor(elementId, currentText, rect) {
+    // Удаляем существующий редактор
+    const existingEditor = document.querySelector('.inline-editor');
+    if (existingEditor) {
+      existingEditor.remove();
+    }
+    
+    const editor = document.createElement('div');
+    editor.className = 'inline-editor';
+    editor.style.left = rect.left + 'px';
+    editor.style.top = rect.top + 'px';
+    editor.style.width = rect.width + 'px';
+    
+    editor.innerHTML = `
+      <textarea id="inline-textarea">${currentText}</textarea>
+      <div class="editor-controls">
+        <button onclick="pageEditor.cancelInlineEdit()">Скасувати</button>
+        <button onclick="pageEditor.saveInlineEdit('${elementId}')">OK</button>
+      </div>
+    `;
+    
+    document.body.appendChild(editor);
+    
+    const textarea = editor.querySelector('textarea');
+    textarea.focus();
+    textarea.select();
+    
+    // Обработка клавиш
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.cancelInlineEdit();
+      } else if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.saveInlineEdit(elementId);
+      }
+    });
+  }
+  
+  saveInlineEdit(elementId) {
+    const textarea = document.getElementById('inline-textarea');
+    const newText = textarea.value;
+    
+    // Отправляем в iframe
+    const iframe = document.getElementById('preview-frame');
+    iframe.contentWindow.postMessage({
+      type: 'update_content',
+      elementId: elementId,
+      newText: newText
+    }, '*');
+    
+    // Удаляем редактор
+    document.querySelector('.inline-editor').remove();
+  }
+  
+  cancelInlineEdit() {
+    document.querySelector('.inline-editor').remove();
+  }
+  
+  showPropertiesPanel(elementData) {
+    const panel = document.getElementById('properties-panel');
+    const closeBtn = document.getElementById('close-properties');
+    const properties = document.getElementById('element-properties');
+    
+    // Показываем панель
+    panel.style.right = '0';
+    closeBtn.style.display = 'block';
+    
+    // Заполняем свойства
+    properties.innerHTML = `
+      <div style="margin-bottom: 20px;">
+        <h4 style="margin: 0 0 10px 0;">ID: ${elementData.id}</h4>
+        <p style="margin: 0 0 10px 0; color: #666;">Тег: ${elementData.tag}</p>
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Текст:</label>
+        <textarea id="property-text" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; min-height: 100px; resize: vertical;">${elementData.text}</textarea>
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600;">CSS класи:</label>
+        <input type="text" id="property-classes" value="${elementData.classes || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+      </div>
+      
+      <div style="display: flex; gap: 10px;">
+        <button onclick="pageEditor.applyProperties('${elementData.id}')" class="btn btn--primary" style="flex: 1;">Застосувати</button>
+        <button onclick="pageEditor.resetElement('${elementData.id}')" class="btn btn--secondary" style="flex: 1;">Скинути</button>
+      </div>
+    `;
+  }
+  
+  closePropertiesPanel() {
+    const panel = document.getElementById('properties-panel');
+    const closeBtn = document.getElementById('close-properties');
+    
+    panel.style.right = '-400px';
+    closeBtn.style.display = 'none';
+  }
+  
+  applyProperties(elementId) {
+    const text = document.getElementById('property-text').value;
+    const classes = document.getElementById('property-classes').value;
+    
+    // Обновляем контент
+    this.handleContentChange({ elementId, newText: text });
+    
+    // Отправляем в iframe
+    const iframe = document.getElementById('preview-frame');
+    iframe.contentWindow.postMessage({
+      type: 'update_element',
+      elementId: elementId,
+      text: text,
+      classes: classes
+    }, '*');
+    
+    this.showStatus('Зміни застосовано', 'success');
+  }
+  
+  resetElement(elementId) {
+    const originalText = this.originalContent[this.currentPage]?.elements?.[elementId] || '';
+    
+    // Восстанавливаем оригинальный текст
+    this.handleContentChange({ elementId, newText: originalText });
+    
+    // Отправляем в iframe
+    const iframe = document.getElementById('preview-frame');
+    iframe.contentWindow.postMessage({
+      type: 'update_content',
+      elementId: elementId,
+      newText: originalText
+    }, '*');
+    
+    this.closePropertiesPanel();
+    this.showStatus('Елемент скинуто', 'info');
+  }
+  
+  addToHistory() {
+    // Удаляем будущую историю если мы не в конце
+    if (this.historyIndex < this.history.length - 1) {
+      this.history = this.history.slice(0, this.historyIndex + 1);
+    }
+    
+    // Добавляем новое состояние
+    this.history.push(JSON.parse(JSON.stringify(this.pageContent)));
+    this.historyIndex++;
+    
+    // Ограничиваем историю 50 состояниями
+    if (this.history.length > 50) {
+      this.history.shift();
+      this.historyIndex--;
+    }
+  }
+  
+  undo() {
+    if (this.historyIndex > 0) {
+      this.historyIndex--;
+      this.pageContent = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
+      this.setupIframeCommunication();
+      this.showStatus('Скасовано', 'info');
+    }
+  }
+  
+  redo() {
+    if (this.historyIndex < this.history.length - 1) {
+      this.historyIndex++;
+      this.pageContent = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
+      this.setupIframeCommunication();
+      this.showStatus('Повторено', 'info');
+    }
+  }
+  
+  async autoSave() {
+    try {
+      const response = await fetch('/api/pages-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(this.pageContent)
+      });
+      
+      if (response.ok) {
+        this.showStatus('Автосбереження виконано', 'success');
+      } else {
+        throw new Error('Save failed');
+      }
+    } catch (error) {
+      console.error('Auto-save error:', error);
+      this.showStatus('Помилка автосбереження', 'error');
+    }
+  }
+  
+  async save() {
+    try {
+      const response = await fetch('/api/pages-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(this.pageContent)
+      });
+      
+      if (response.ok) {
+        this.showStatus('Збережено успішно', 'success');
+        this.originalContent = JSON.parse(JSON.stringify(this.pageContent));
+      } else {
+        throw new Error('Save failed');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      this.showStatus('Помилка збереження', 'error');
+    }
+  }
+  
+  async publish() {
+    console.log('Publish button clicked');
+    await this.save();
+    
+    // Здесь можно добавить логику публикации
+    // Например, очистка кеша, уведомления и т.д.
+    
+    this.showStatus('Опубліковано успішно!', 'success');
+    
+    // Перенаправляем на страницу для проверки в текущей вкладке
+    setTimeout(() => {
+      console.log('Redirecting to:', '/' + this.currentPage);
+      window.location.href = '/' + this.currentPage;
+    }, 1000);
+  }
+  
+  showStatus(message, type = 'info') {
+    const status = document.getElementById('status');
+    const statusText = document.getElementById('status-text');
+    
+    statusText.textContent = message;
+    status.className = 'status';
+    status.style.display = 'block';
+    
+    // Цвет в зависимости от типа
+    const colors = {
+      success: '#d4edda',
+      error: '#f8d7da',
+      info: '#d1ecf1',
+      warning: '#fff3cd'
+    };
+    
+    status.style.background = colors[type] || colors.info;
+    status.style.color = type === 'warning' ? '#856404' : type === 'error' ? '#721c24' : type === 'success' ? '#155724' : '#0c5460';
+    
+    // Автоскрытие через 3 секунды
+    clearTimeout(this.statusTimeout);
+    this.statusTimeout = setTimeout(() => {
+      status.style.display = 'none';
+    }, 3000);
+  }
+}
+
+// Инициализация редактора
+let pageEditor;
+document.addEventListener('DOMContentLoaded', function() {
+  pageEditor = new PageEditor();
+});
+</script>
+{% endblock %}

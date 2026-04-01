@@ -7,10 +7,20 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Atlant Service — Сервіс побутової техніки</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=99998" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=99998" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}?v=99998" />
     <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" />
+    
+    <!-- Page Editor Script (только в режиме редактирования) -->
+    {% if request.args.get('edit_mode') == 'true' %}
+    <script src="{{ url_for('static', filename='js/page-editor-iframe.js') }}"></script>
+    {% endif %}
   </head>
   <body>
+    <!-- Universal modal script - load early for onclick handlers -->
+    <script src="{{ url_for('static', filename='js/modals.js') }}"></script>
+    
     {% if not hide_header %}
     <header class="site-header">
       <div class="container">
@@ -26,6 +36,7 @@
         <nav class="nav" id="mainNav">
           <a href="{{ url_for('warranty') }}">Гарантійний ремонт</a>
           <a href="{{ url_for('services') }}">Сервіс</a>
+          <a href="{{ url_for('vacancies') }}">Вакансії</a>
           <a href="{{ url_for('terms') }}">Умови для клієнтів</a>
           <a href="{{ url_for('index') }}#about-contact">Контакти</a>
         </nav>
@@ -63,6 +74,48 @@
     </footer>
     
     <script>
+      // Универсальный обработчик для всех кнопок на сайте
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('Universal button handler loaded');
+        
+        // Обработчик для всех ссылок с текстом "Надіслати резюме"
+        document.addEventListener('click', function(e) {
+          if (e.target.tagName === 'A' && e.target.textContent.includes('Надіслати резюме')) {
+            console.log('Resume link clicked:', e.target);
+            e.preventDefault();
+            
+            // Ищем модальное окно резюме
+            const resumeModal = document.getElementById('resumeModal');
+            if (resumeModal) {
+              resumeModal.style.display = 'flex';
+              console.log('Resume modal opened');
+            } else {
+              console.log('Resume modal not found, redirecting to contact page');
+              window.location.href = '/contact#resume-tab';
+            }
+          }
+        });
+        
+        // Обработчик для всех кнопок с классом .btn
+        document.addEventListener('click', function(e) {
+          if (e.target.classList.contains('btn')) {
+            console.log('Button clicked:', e.target.textContent);
+            
+            // Проверяем onclick атрибут
+            if (e.target.onclick) {
+              console.log('Button has onclick handler');
+            } else {
+              console.log('Button has no onclick handler');
+            }
+          }
+        });
+        
+        // Обработчик для всех форм
+        document.addEventListener('submit', function(e) {
+          console.log('Form submitted:', e.target);
+        });
+      });
+      
       // Mobile menu toggle
       document.addEventListener('DOMContentLoaded', function() {
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');

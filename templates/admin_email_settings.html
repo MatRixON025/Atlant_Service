@@ -1,0 +1,278 @@
+{% extends "admin_base.html" %}
+
+{% block admin_content %}
+<style>
+/* Email Settings Styles */
+.email-settings-form {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-group .form-help {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.form-group input[type="password"] {
+  font-family: monospace;
+}
+
+.btn-submit {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-submit:hover {
+  background-color: #0056b3;
+}
+
+.btn-test {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-left: 10px;
+}
+
+.btn-test:hover {
+  background-color: #218838;
+}
+
+.test-result {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.test-result.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.test-result.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.settings-info {
+  background-color: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.settings-info h4 {
+  margin: 0 0 10px 0;
+  color: #1976d2;
+}
+
+.settings-info ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.settings-info li {
+  margin-bottom: 5px;
+  color: #424242;
+}
+
+@media (max-width: 768px) {
+  .email-settings-form {
+    padding: 0 10px;
+  }
+  
+  .btn-test {
+    display: block;
+    margin-left: 0;
+    margin-top: 10px;
+  }
+}
+</style>
+
+<section class="admin-section">
+  <h2>Налаштування Email сповіщень</h2>
+  <p class="admin-section__desc">Налаштуйте відправку email сповіщень при нових заявках та резюме</p>
+
+  <div class="settings-info">
+    <h4>📧 Інформація про налаштування:</h4>
+    <ul>
+      <li><strong>Gmail:</strong> smtp.gmail.com, порт 587, потрібен пароль додатку</li>
+      <li><strong>Пароль додатку Gmail:</strong> <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: #007bff;">myaccount.google.com/apppasswords</a></li>
+      <li><strong>Outlook:</strong> smtp-mail.outlook.com, порт 587</li>
+      <li><strong>Yahoo:</strong> smtp.mail.yahoo.com, порт 587</li>
+      <li>Для Gmail потрібно увімкнути 2FA і створити пароль додатку за посиланням вище</li>
+      <li>Альтернатива для Gmail: <a href="https://myaccount.google.com/lesssecureapps" target="_blank" style="color: #007bff;">увімкнути "менш надійні додатки"</a> і використовувати основний пароль</li>
+    </ul>
+  </div>
+
+  <form method="post" class="email-settings-form">
+    <div class="form-group">
+      <label for="admin_email">📧 Email адміна (куди надсилати сповіщення):</label>
+      <input 
+        type="email" 
+        id="admin_email" 
+        name="admin_email" 
+        value="{{ settings.admin_email or '' }}" 
+        placeholder="admin@example.com"
+        required
+      >
+      <div class="form-help">На цю пошту будуть приходити сповіщення про нові заявки та резюме</div>
+    </div>
+
+    <div class="form-group">
+      <label for="email_username">🔐 Email для відправки (логін):</label>
+      <input 
+        type="email" 
+        id="email_username" 
+        name="email_username" 
+        value="{{ settings.email_username or '' }}" 
+        placeholder="your-email@gmail.com"
+        required
+      >
+      <div class="form-help">Email акаунта, з якого будуть відправлятися сповіщення</div>
+    </div>
+
+    <div class="form-group">
+      <label for="email_password">🔑 Пароль (або пароль додатку):</label>
+      <input 
+        type="password" 
+        id="email_password" 
+        name="email_password" 
+        value="{{ settings.email_password or '' }}" 
+        placeholder="Ваш пароль або пароль додатку"
+        required
+      >
+      <div class="form-help">Для Gmail використовуйте пароль додатку: <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: #007bff;">myaccount.google.com/apppasswords</a></div>
+    </div>
+
+    <div class="form-group">
+      <label for="email_server">🌐 SMTP сервер:</label>
+      <input 
+        type="text" 
+        id="email_server" 
+        name="email_server" 
+        value="{{ settings.email_server or 'smtp.gmail.com' }}" 
+        placeholder="smtp.gmail.com"
+      >
+      <div class="form-help">SMTP сервер вашого поштового провайдера</div>
+    </div>
+
+    <div class="form-group">
+      <label for="email_port">🔌 Порт:</label>
+      <input 
+        type="number" 
+        id="email_port" 
+        name="email_port" 
+        value="{{ settings.email_port or '587' }}" 
+        placeholder="587"
+      >
+      <div class="form-help">Зазвичай 587 для TLS, 465 для SSL</div>
+    </div>
+
+    <div class="form-group">
+      <button type="submit" class="btn-submit">💾 Зберегти налаштування</button>
+      <button type="button" class="btn-test" onclick="testEmailSettings()">🧪 Тестувати відправку</button>
+    </div>
+  </form>
+
+  <div id="testResult" style="display: none;"></div>
+</section>
+
+<script>
+function testEmailSettings() {
+  const testResult = document.getElementById('testResult');
+  testResult.style.display = 'block';
+  testResult.className = 'test-result';
+  testResult.innerHTML = '🔄 Тестування відправки email...';
+  
+  fetch('/admin/test-email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      testResult.className = 'test-result success';
+      testResult.innerHTML = '✅ ' + data.message;
+    } else {
+      testResult.className = 'test-result error';
+      testResult.innerHTML = '❌ ' + data.error;
+    }
+  })
+  .catch(error => {
+    testResult.className = 'test-result error';
+    testResult.innerHTML = '❌ Помилка з\'єднання: ' + error.message;
+  });
+}
+
+// Toggle password visibility
+document.addEventListener('DOMContentLoaded', function() {
+  const passwordInput = document.getElementById('email_password');
+  const passwordField = passwordInput.parentElement;
+  
+  const toggleBtn = document.createElement('button');
+  toggleBtn.type = 'button';
+  toggleBtn.innerHTML = '👁️ Показати';
+  toggleBtn.style.cssText = 'margin-top: 5px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-secondary); color: var(--text); cursor: pointer; font-size: 12px;';
+  
+  toggleBtn.addEventListener('click', function() {
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      toggleBtn.innerHTML = '👁️‍🗨️ Сховати';
+    } else {
+      passwordInput.type = 'password';
+      toggleBtn.innerHTML = '👁️ Показати';
+    }
+  });
+  
+  passwordField.appendChild(toggleBtn);
+});
+</script>
+{% endblock %}

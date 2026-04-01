@@ -1,0 +1,476 @@
+{% extends "admin_base.html" %}
+
+{% block admin_content %}
+<div class="admin-services">
+  <div class="page-header">
+    <h1>Послуги</h1>
+    <button class="btn-add" onclick="openServiceModal()">+ Додати</button>
+  </div>
+  
+  <div class="services-list">
+    {% for service in services %}
+    <div class="service-item" onclick="openServiceModal('{{ service.id }}')">
+      <div class="service-info">
+        <h3>{{ service.title }}</h3>
+        <p>{{ service.desc }}</p>
+        <span class="service-id">{{ service.id }}</span>
+      </div>
+      <div class="service-actions">
+        <span class="price">{{ prices.get('diagnostic_' + service.id, '300') }} грн</span>
+        <button class="btn-edit" onclick="event.stopPropagation(); openServiceModal('{{ service.id }}')">✏️</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Модальное окно -->
+<div id="serviceModal" class="modal">
+  <div class="modal__content">
+    <div class="modal__header">
+      <h2 id="modalTitle">Нова послуга</h2>
+      <button class="modal__close" type="button" onclick="closeServiceModal()">&times;</button>
+    </div>
+    
+    <form id="serviceForm" class="modal__body">
+      <input type="hidden" id="serviceId" name="service_id">
+        
+        <div class="form-group">
+          <label for="serviceTitle">Назва послуги</label>
+          <input type="text" id="serviceTitle" name="service_title" required autocomplete="off">
+        </div>
+        
+        <div class="form-group">
+          <label for="serviceDesc">Опис</label>
+          <textarea id="serviceDesc" name="service_desc" required autocomplete="off"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="serviceDetails">Деталі</label>
+          <textarea id="serviceDetails" name="service_details" autocomplete="off"></textarea>
+        </div>
+        
+        <div class="prices-section">
+          <h3>Ціни</h3>
+          
+          <div class="form-group">
+            <label for="diagnosticPrice">Ціна діагностики</label>
+            <input type="text" id="diagnosticPrice" name="diagnostic_price" value="300" autocomplete="off">
+          </div>
+          
+          <div class="form-group">
+            <label>Ціни на роботи</label>
+            <div id="pricesContainer">
+              <!-- Цены будут загружены динамически -->
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal__footer">
+          <button type="submit" class="btn btn-primary">Зберегти</button>
+          <button type="button" class="btn btn-secondary" onclick="closeServiceModal()">Скасувати</button>
+          <button type="button" class="btn btn-danger" id="deleteBtn" onclick="deleteService()" style="display: none;">Видалити</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Данные
+const servicesData = {{ services|tojson|safe }};
+const pricesData = {{ prices|tojson|safe }};
+let currentService = null;
+
+// Функции модального окна
+function openServiceModal(serviceId = null) {
+  // Находим услугу
+  currentService = serviceId ? servicesData.find(s => s.id === serviceId) : null;
+  const modal = document.getElementById('serviceModal');
+  const form = document.getElementById('serviceForm');
+  
+  // Сброс формы
+  form.reset();
+  document.getElementById('pricesContainer').innerHTML = '';
+  
+  if (currentService) {
+    // Редактирование существующей услуги
+    document.getElementById('modalTitle').textContent = 'Редагувати послугу';
+    document.getElementById('serviceId').value = currentService.id;
+    document.getElementById('serviceTitle').value = currentService.title || '';
+    document.getElementById('serviceDesc').value = currentService.desc || '';
+    document.getElementById('serviceDetails').value = currentService.details || '';
+    document.getElementById('diagnosticPrice').value = pricesData[`diagnostic_${serviceId}`] || '300';
+    document.getElementById('deleteBtn').style.display = 'inline-block';
+    
+    // Загружаем цены на работы
+    loadServicePrices(currentService);
+  } else {
+    // Добавление новой услуги
+    document.getElementById('modalTitle').textContent = 'Нова послуга';
+    document.getElementById('serviceId').value = '';
+    document.getElementById('diagnosticPrice').value = '300';
+    document.getElementById('deleteBtn').style.display = 'none';
+    
+    // Показываем сообщение для новых услуг
+    document.getElementById('pricesContainer').innerHTML = 
+      '<div class="no-prices">Спочатку збережіть послугу, щоб налаштувати ціни на роботи</div>';
+  }
+  
+  // Показываем модальное окно
+  openModal('serviceModal');
+}
+
+function closeServiceModal() {
+  closeModal('serviceModal');
+}
+
+function loadServicePrices(service) {
+  const container = document.getElementById('pricesContainer');
+  container.innerHTML = '';
+  
+  if (service.non_warranty_cases && service.non_warranty_cases.length > 0) {
+    service.non_warranty_cases.forEach(caseItem => {
+      const priceKey = `case_${service.id}_${caseItem.id}`;
+      const currentPrice = pricesData[priceKey] || caseItem.price || '0';
+      
+      const priceItem = document.createElement('div');
+      priceItem.className = 'price-item';
+      priceItem.innerHTML = `
+        <label>${caseItem.name}</label>
+        <input type="text" name="${priceKey}" value="${currentPrice}" placeholder="${caseItem.price}" autocomplete="off">
+      `;
+      container.appendChild(priceItem);
+    });
+  } else {
+    container.innerHTML = '<div class="no-prices">Немає налаштованих робіт для цієї послуги</div>';
+  }
+}
+
+function deleteService() {
+  if (!currentService || !confirm('Видалити послугу?')) return;
+  
+  fetch(`/admin/services/delete/${currentService.id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) location.reload();
+    else alert('Помилка: ' + data.error);
+  })
+  .catch(err => alert('Помилка: ' + err));
+}
+
+// Обработка формы
+document.getElementById('serviceForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // Собираем данные формы
+  const formData = new FormData(this);
+  const data = {};
+  
+  // Добавляем основные поля
+  for (let [key, value] of formData.entries()) {
+    data[key] = value;
+  }
+  
+  // Добавляем цены из полей
+  const priceInputs = document.querySelectorAll('#pricesContainer input');
+  priceInputs.forEach(input => {
+    data[input.name] = input.value;
+  });
+  
+  // Отправляем на сервер как JSON
+  const url = currentService ? 
+    `/admin/services/update/${currentService.id}` : 
+    '/admin/services/add';
+  
+  fetch(url, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(res => {
+    // Проверяем, что ответ это JSON
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return res.json();
+    } else {
+      // Если сервер вернул HTML, значит это редирект или ошибка
+      throw new Error('Сервер вернул HTML вместо JSON. Возможно, требуется повторная авторизация.');
+    }
+  })
+  .then(response => {
+    if (response.success) {
+      location.reload();
+    } else {
+      alert('Помилка: ' + response.error);
+    }
+  })
+  .catch(err => {
+    console.error('Error:', err);
+    alert('Помилка: ' + err.message);
+  });
+});
+
+// Закрытие по клику вне модального окна
+window.addEventListener('click', function(event) {
+  const modal = document.getElementById('serviceModal');
+  if (event.target === modal) {
+    closeModal();
+  }
+});
+
+// Закрытие по ESC
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeModal();
+  }
+});
+</script>
+
+<style>
+/* Основные стили */
+.admin-services {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 400;
+  color: #333;
+}
+
+.btn-add {
+  background: #333;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-add:hover {
+  background: #555;
+}
+
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.service-item {
+  background: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.service-item:hover {
+  background: #f5f5f5;
+}
+
+.service-info {
+  flex: 1;
+}
+
+.service-info h3 {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.service-info p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.service-info .service-id {
+  display: inline-block;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 6px;
+}
+
+.service-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 20px;
+}
+
+.price {
+  background: #007bff;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.btn-edit {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-edit:hover {
+  background: #0056b3;
+}
+
+/* Улучшенные стили для модального окна */
+.modal {
+  z-index: 100 !important;
+}
+
+.modal__content {
+  max-width: 700px;
+}
+
+.modal__body .form-group {
+  margin-bottom: 20px;
+}
+
+.modal__body label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.modal__body input,
+.modal__body textarea,
+.modal__body select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.modal__body textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modal__body input:focus,
+.modal__body textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.prices-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.prices-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.price-item {
+  margin-bottom: 12px;
+}
+
+.price-item label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.price-item input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.no-prices {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #545b62;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+</style>
+</style>
+{% endblock %}

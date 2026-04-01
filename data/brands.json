@@ -1,0 +1,73 @@
+{
+  "vestfrost": {
+    "service_info": "Телефон гарячої лінії VESTFROST: 0-800-21-33-53"
+  },
+  "daewoo": {
+    "service_info": "Телефон гарячої лінії DAEWOO: 0-800-757-257"
+  },
+  "atlantic": {
+    "service_info": "Телефон гарячої лінії ATLANTIC та ROUND: 0-800-500-885"
+  },
+  "round": {
+    "name": "ROUND",
+    "service_info": "Телефон гарячої лінії ROUND та ATLANTIC: 0-800-500-885",
+    "requirements": []
+  },
+  "beko": {
+    "service_info": "Телефон гарячої лінії BEKO та ALTUS: 0-800-500-432"
+  },
+  "altus": {
+    "service_info": "Телефон гарячої лінії ALTUS та BEKO: 0-800-500-432"
+  },
+  "gorenje": {
+    "service_info": "Телефон гарячої лінії GORENJE та Hisense: 0-800-300-024"
+  },
+  "hisense": {
+    "service_info": "Телефон гарячої лінії Hisense та GORENJE: 0-800-300-024"
+  },
+  "candy": {
+    "service_info": "Телефон гарячої лінії CANDY: 0-800-501-509"
+  },
+  "teka": {
+    "service_info": "Телефон гарячої лінії TEKA: 0-800-503-015"
+  },
+  "samsung": {
+    "service_info": "Телефон гарячої лінії Samsung: 0-800-503-081"
+  },
+  "quartz": {
+    "service_info": "Телефон гарячої лінії Quartz: +38 (067) 505-44-99"
+  },
+  "eleyus": {
+    "service_info": "Телефон гарячої лінії Eleyus: +38 (067) 653-50-51 / +38 (050) 437-90-04"
+  },
+  "hansa": {
+    "service_info": "Телефон гарячої лінії Hansa: 0-800-300-835"
+  },
+  "termex": {
+    "service_info": "Телефон гарячої лінії Termex: 0-800-500-610"
+  },
+  "edler": {
+    "service_info": "Телефон гарячої лінії Edler: (097) 77-236-77"
+  },
+  "greta": {
+    "service_info": "Телефон гарячої лінії Greta: 0-800-21-00-20"
+  },
+  "haier": {
+    "service_info": "Телефон гарячої лінії Haier: +38 (044) 299-98-80"
+  },
+  "interlux": {
+    "service_info": "Телефон гарячої лінії Interlux: 0-800-217-697"
+  },
+  "lg": {
+    "service_info": "Телефон гарячої лінії LG: 0-800-303-000"
+  },
+  "sharp": {
+    "service_info": "Телефон гарячої лінії Sharp: 0-800-60-10-22"
+  },
+  "ventolux": {
+    "service_info": "Телефон гарячої лінії VENTOLUX: 0-800-33-97-57 / 0-800-33-61-69"
+  },
+  "scandix": {
+    "service_info": "Телефон гарячої лінії SCANDILUX (SCANDIX): 0-800-217-697"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "contact": {
+    "elements": {
+      "address": "м. Кривий Ріг, вул. Січеславська, 3/47",
+      "contact-form-title": "Надішліть нам повідомлення",
+      "contact-hero-subtitle": "Зв'яжіться з нами для консультації та запису на ремонт",
+      "contact-hero-title": "Контакти",
+      "contact-info-title": "Наша контактна інформація",
+      "contact-map-title": "Як нас знайти",
+      "email": "info@atlant-service.com",
+      "page-title": "Контактна інформація",
+      "phone": "+38 (067) 123-45-67"
+    },
+    "title": "Контакти — Atlant Service"
+  },
+  "index": {
+    "elements": {
+      "hero-cta": "Замовити виклик майстра",
+      "hero-subtitle": "Сервісний центр Atlant Service пропонує гарантійний та не гарантійний ремонт побутової техніки багатьох брендів",
+      "hero-title": "Професійний ремонт побутової техніки",
+      "services-subtitle": "Повний спектр послуг з ремонту та обслуговування побутової техніки",
+      "services-title": "Наші послуги"
+    },
+    "title": "Atlant Service — Сервіс побутової техніки"
+  },
+  "services": {
+    "elements": {
+      "brands-subtitle": "Ми ремонтуємо техніку всіх провідних виробників",
+      "brands-title": "Обслуговувані бренди",
+      "h1-3i3f9s": "Наші послуги123",
+      "page-subtitle": "Професійний ремонт та обслуговування побутової техніки",
+      "page-title": "Наші послуги",
+      "services-hero-subtitle": "Професійний ремонт та обслуговування побутової техніки",
+      "services-hero-title": "Наші послуги"
+    },
+    "title": "Послуги — Atlant Service"
+  },
+  "terms": {
+    "elements": {
+      "terms-hero-subtitle": "Правила та умови надання послуг",
+      "terms-hero-title": "Умови для клієнтів",
+      "terms-intro-text": "Ласкаво просимо до сервісного центру Atlant Service. Ми прагнемо надавати якісні послуги з ремонту побутової техніки.",
+      "terms-intro-title": "Загальні положення",
+      "terms-payment-text": "Оплата послуг здійснюється після виконання ремонту та здачі техніки клієнту.",
+      "terms-payment-title": "Умови оплати"
+    },
+    "title": "Умови для клієнтів — Atlant Service"
+  },
+  "vacancies": {
+    "elements": {
+      "vacancies-empty-text": "Слідкуйте за оновленнями або зв'яжіться з нами напряму",
+      "vacancies-empty-title": "Наразі відкритих вакансій немає",
+      "vacancies-hero-subtitle": "Приєднуйтесь до нашої команди професіоналів",
+      "vacancies-hero-title": "Вакансії"
+    },
+    "title": "Вакансії — Atlant Service"
+  },
+  "warranty": {
+    "elements": {
+      "h1-mxg7ep": "Гарантійне обслуговування",
+      "h3-6o78uh": "Гарантійні випадки",
+      "page-subtitle": "Ми несемо повну відповідальність за нашу роботу",
+      "page-title": "Гарантійні зобов'язання"
+    },
+    "title": "Гарантія — Atlant Service"
+  }
+}

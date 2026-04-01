@@ -1,13 +1,20 @@
 {% extends "layout.html" %}
 
 {% block body %}
+<script src="{{ url_for('static', filename='js/page-editor-iframe.js') }}"></script>
 <section class="hero hero--services">
   <div class="container">
-    <h1>Наші послуги</h1>
-    <p class="hero__subtitle">Професійний ремонт та обслуговування побутової техніки</p>
+    <h1 data-editable-id="services-hero-title">{{ page_content.elements.get('services-hero-title', 'Наші послуги') }}</h1>
+    <p data-editable-id="services-hero-subtitle">{{ page_content.elements.get('services-hero-subtitle', 'Професійний ремонт та обслуговування побутової техніки') }}</p>
     <div class="price-notice">
       <strong>Зверніть увагу!</strong> Ціни можуть змінюватися.
+      <p>Ціни вказані без урахування вартості запчастин.</p>
     </div>
+    {% if session.get('admin_logged_in') %}
+    <div style="margin-top: 20px;">
+      <a href="/admin/services" class="button button--primary">Перейти до адміністрування послуг</a>
+    </div>
+    {% endif %}
   </div>
 </section>
 
@@ -16,9 +23,21 @@
     <div class="grid">
       {% for service in services %}
       <div class="card">
+        {% if session.get('admin_logged_in') %}
+        <div class="admin-edit-controls">
+          <h3 contenteditable="true" data-service-id="{{ service.id }}" data-field="title" class="editable-title">{{ service.title }}</h3>
+          <button class="save-btn" data-service-id="{{ service.id }}" style="display: none;"></button>
+        </div>
+        {% else %}
         <h3>{{ service.title }}</h3>
+        {% endif %}
         <p>{{ service.desc }}</p>
         <button class="button button--secondary" type="button" data-service="{{ service.id }}">Докладніше</button>
+        {% if session.get('admin_logged_in') %}
+        <div style="margin-top: 10px;">
+          <a href="/admin/services#edit-{{ service.id }}" class="button button--small button--edit">Редагувати в адмінці</a>
+        </div>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
@@ -27,28 +46,28 @@
 
 <section class="section section--alt">
   <div class="container">
-    <h2>Ми авторизований сервісний центр</h2>
-    <p>Офіційні гарантійні ремонти для провідних брендів:</p>
-    <div class="brands-grid">
-      {% for brand_id, brand in brands.items() %}
-      <img src="{{ url_for('static', filename='img/brands/' + brand_id + '.png') }}" alt="{{ brand.name }}" class="brand-logo" data-brand="{{ brand_id }}">
-      {% endfor %}
+    <div class="brands-section">
+      <h2>Ми авторизований сервісний центр</h2>
+      <p>Офіційні гарантійні ремонти для провідних брендів:</p>
+      <div class="brands-grid">
+        {% for brand_id, brand in brands.items() %}
+        <img src="{{ url_for('static', filename='img/brands/' + brand_id + '.png') }}" alt="{{ brand.name }}" class="brand-logo" data-brand="{{ brand_id }}">
+        {% endfor %}
+      </div>
     </div>
   </div>
 </section>
 
-<div class="modal" id="brandModal" aria-hidden="true">
-  <div class="modal__backdrop" data-close></div>
-  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="brandModalTitle">
-    <button class="modal__close" type="button" data-close aria-label="Закрити">×</button>
-    
+<div class="modal" id="brandModal">
+  <div class="modal__content">
     <div class="modal__header">
       <div class="modal__brand-info">
         <img id="brandModalLogo" src="" alt="" class="modal__brand-logo">
       </div>
+      <button class="modal__close" type="button" onclick="closeBrandModal()" aria-label="Закрити">×</button>
     </div>
     
-    <div class="modal__content">
+    <div class="modal__body">
       <div class="modal__section modal__section--contact">
         <h4>Сервісна інформація</h4>
         <p id="brandServiceInfo" class="modal__service-info"></p>
@@ -74,13 +93,9 @@
 <div class="modal" id="serviceModal" aria-hidden="true">
   <div class="modal__backdrop" data-close></div>
   <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <button class="modal__close" type="button" data-close aria-label="Закрити">×</button>
+    <button class="modal__close" type="button" onclick="closeModal()" aria-label="Закрити">×</button>
     <h3 id="modalTitle"></h3>
     <p id="modalText"></p>
-    <div class="modal__section">
-      <h4>Опис послуги</h4>
-      <p id="modalServiceDesc"></p>
-    </div>
     <div class="modal__section" id="nonWarrantyCasesSection" style="display:none;">
       <h4>Вартість негарантійних робіт</h4>
       <div class="price-notice">
@@ -95,6 +110,12 @@
   const servicesData = {{ services|tojson|safe }};
   const pricesData = {{ prices|tojson|safe }};
   const brandsData = {{ brands|tojson|safe }};
+  
+  // Отладка - проверяем загрузку данных
+  console.log('Дані загружені:');
+  console.log('Services:', servicesData);
+  console.log('Prices:', pricesData);
+  console.log('Brands:', brandsData);
 
   function openModal(serviceId) {
     const service = servicesData.find(function(s) { return s.id === serviceId; });
@@ -103,7 +124,6 @@
     const modal = document.getElementById('serviceModal');
     document.getElementById('modalTitle').textContent = service.title;
     document.getElementById('modalText').textContent = service.details;
-    document.getElementById('modalServiceDesc').textContent = service.desc;
 
     // Показуємо ціни для негарантійних робіт
     if (service.non_warranty_cases && service.non_warranty_cases.length > 0) {
@@ -231,108 +251,145 @@
   document.addEventListener('click', function(event) {
     const serviceButton = event.target.closest('[data-service]');
     if (serviceButton) {
-      openModal(serviceButton.getAttribute('data-service'));
-    }
-
-    const brandImg = event.target.closest('[data-brand]');
-    if (brandImg) {
-      openBrandModal(brandImg.getAttribute('data-brand'));
-    }
-
-    if (event.target.closest('[data-close]')) {
-      closeModal();
-      closeBrandModal();
+      openModal(serviceButton.dataset.service);
     }
   });
 
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-      closeModal();
-      closeBrandModal();
+  document.addEventListener('click', function(event) {
+    const brandButton = event.target.closest('[data-brand]');
+    if (brandButton) {
+      openBrandModal(brandButton.dataset.brand);
     }
   });
+
+  // Inline редактирование для админа
+  if (document.querySelector('.editable-title')) {
+    document.addEventListener('input', function(event) {
+      if (event.target.classList.contains('editable-title')) {
+        const serviceId = event.target.dataset.serviceId;
+        const saveBtn = document.querySelector(`.save-btn[data-service-id="${serviceId}"]`);
+        if (saveBtn) {
+          saveBtn.style.display = 'inline-block';
+        }
+      }
+    });
+
+    document.addEventListener('click', function(event) {
+      if (event.target.classList.contains('save-btn')) {
+        const serviceId = event.target.dataset.serviceId;
+        const titleElement = document.querySelector(`.editable-title[data-service-id="${serviceId}"]`);
+        const newTitle = titleElement.textContent.trim();
+        
+        if (newTitle) {
+          // Сохраняем изменения
+          fetch(`/admin/services/update/${serviceId}`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+              service_title: newTitle,
+              service_desc: servicesData.find(s => s.id === serviceId)?.desc || '',
+              service_details: servicesData.find(s => s.id === serviceId)?.details || ''
+            })
+          })
+          .then(res => res.json())
+          .then(response => {
+            if (response.success) {
+              event.target.style.display = 'none';
+              // Обновляем данные в servicesData
+              const service = servicesData.find(s => s.id === serviceId);
+              if (service) {
+                service.title = newTitle;
+              }
+              alert('Збережено!');
+            } else {
+              alert('Помилка: ' + response.error);
+            }
+          })
+          .catch(err => {
+            console.error('Error:', err);
+            alert('Помилка збереження');
+          });
+        }
+      }
+    });
+  }
+
+  // Закрытие модальных окон
+  document.addEventListener('click', function(event) {
+    // Проверяем если это элемент с data-close или его родитель
+    const closeBtn = event.target.closest('[data-close]');
+    if (closeBtn || event.target.classList.contains('modal__backdrop')) {
+      const modals = document.querySelectorAll('.modal');
+      modals.forEach(function(modal) {
+        modal.classList.remove('modal--open');
+        modal.setAttribute('aria-hidden', 'true');
+      });
+      event.stopPropagation();
+    }
+  }, true); // Используем capture phase для надежности
+
+  // Автоматическое открытие модального окна для редактирования
+  if (window.location.hash && window.location.hash.startsWith('#edit-')) {
+    const serviceId = window.location.hash.replace('#edit-', '');
+    setTimeout(function() {
+      window.location.href = '/admin/services#' + window.location.hash;
+    }, 100);
+  }
 </script>
 
 <style>
-/* Modal styles for services page */
-.modal__header {
-  text-align: center;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid var(--border);
-}
-
-.modal__brand-info {
+/* Inline редактирование */
+.admin-edit-controls {
+  position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
-.modal__brand-logo {
-  max-width: 180px;
-  height: auto;
-  max-height: 120px;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+.editable-title {
+  background: rgba(40, 167, 69, 0.1);
+  border: 2px dashed #28a745;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: text;
+  transition: all 0.2s ease;
+  outline: none;
 }
 
-.modal__content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.editable-title:hover {
+  background: rgba(40, 167, 69, 0.2);
+  border-color: #218838;
 }
 
-.modal__section {
-  padding: 16px;
-  border-radius: 12px;
-  background: rgba(29, 114, 184, 0.03);
-  border-left: 4px solid var(--primary);
+.editable-title:focus {
+  background: white;
+  border-color: #218838;
+  border-style: solid;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
 }
 
-.modal__section--contact {
-  border-left-color: #28a745;
-  background: rgba(40, 167, 69, 0.03);
+.save-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.modal__section--warranty {
-  border-left-color: var(--primary);
-  background: rgba(29, 114, 184, 0.03);
+.save-btn:hover {
+  background: #218838;
+  transform: scale(1.05);
 }
 
-.modal__section--requirements {
-  border-left-color: #ffc107;
-  background: rgba(255, 193, 7, 0.03);
-}
-
-.modal__section h4 {
-  margin: 0 0 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--fg);
-}
-
-.modal__service-info {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.modal__warranty-list ul {
-  margin: 0;
-  padding-left: 16px;
-}
-
-.modal__warranty-list li {
-  margin-bottom: 8px;
-  color: var(--muted);
-  line-height: 1.4;
-}
-
-.modal__warranty-list li:last-child {
-  margin-bottom: 0;
+.save-btn:active {
+  transform: scale(0.95);
 }
 </style>
 

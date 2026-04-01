@@ -63,10 +63,6 @@
         Увійти
       </button>
     </form>
-
-    <div class="admin-login-footer">
-      <p>Забули пароль? Зв'яжіться з адміністратором</p>
-    </div>
   </div>
 </div>
 
@@ -291,18 +287,6 @@ document.addEventListener('DOMContentLoaded', function() {
   transform: translateY(0);
 }
 
-.admin-login-footer {
-  text-align: center;
-  padding: 1.5rem 2rem 2rem;
-  background: rgba(29, 114, 184, 0.03);
-}
-
-.admin-login-footer p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
 @media (max-width: 480px) {
   .admin-login-container {
     padding: 1rem;
@@ -313,8 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   .admin-login-header,
-  .admin-login-form,
-  .admin-login-footer {
+  .admin-login-form {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }

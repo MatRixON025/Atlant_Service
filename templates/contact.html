@@ -1,0 +1,466 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<!-- Flash messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash-message flash-{{ category }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<!-- Success Modal -->
+<div id="successModal" class="modal">
+  <div class="modal__content">
+    <div class="modal__header">
+      <h3>✅ Успішно!</h3>
+      <button class="modal__close" onclick="closeModal('successModal')">&times;</button>
+    </div>
+    <div class="modal__body">
+      <p>Ваше резюме успішно надіслано!</p>
+      <p>Ми зв'яжемося з вами найближчим часом.</p>
+    </div>
+    <div class="modal__footer">
+      <button class="button" onclick="closeModal('successModal')">Зрозуміло</button>
+    </div>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="container">
+    <h1 data-editable-id="contact-hero-title">{{ page_content.elements.get('contact-hero-title', 'Контакти') }}</h1>
+    <p class="hero__subtitle" data-editable-id="contact-hero-subtitle">{{ page_content.elements.get('contact-hero-subtitle', "Зв'яжіться з нами для консультації та запису на ремонт") }}</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="contact-grid">
+      <div class="contact-info">
+        <h2 data-editable-id="contact-info-title">{{ page_content.elements.get('contact-info-title', 'Наша контактна інформація') }}</h2>
+        <p><strong>Телефони:</strong></p>
+        {% for phone in contact.phones %}
+          <p><a href="tel:{{ phone.replace(' ', '').replace('(', '').replace(')', '').replace('-', '') }}">{{ phone }}</a></p>
+        {% endfor %}
+        <p><strong>Email:</strong> <a href="mailto:{{ contact.email }}">{{ contact.email }}</a></p>
+        <p><strong>Адреса:</strong> {{ contact.address }}</p>
+      </div>
+
+      <div class="contact-form-container">
+        <h2 data-editable-id="contact-form-title">{{ page_content.elements.get('contact-form-title', "Надішліть нам повідомлення") }}</h2>
+        
+        <!-- Tab Navigation -->
+        <div class="form-tabs">
+          <button type="button" class="tab-btn active" onclick="switchTab('contact')">Повідомлення</button>
+          <button type="button" class="tab-btn" onclick="switchTab('resume')">Резюме</button>
+        </div>
+        
+        <!-- Contact Form -->
+        <div id="contact-tab" class="tab-content active">
+          <form class="contact-form" method="post" action="{{ url_for('contact') }}">
+            <label for="name">Ім'я</label>
+            <input id="name" name="name" type="text" placeholder="Ваше ім'я" required />
+
+            <label for="phone">Телефон</label>
+            <input id="phone" name="phone" type="tel" placeholder="Ваш телефон" required />
+
+            <label for="message">Повідомлення</label>
+            <textarea id="message" name="message" rows="5" placeholder="Опишіть вашу проблему" required></textarea>
+
+            <button type="submit" class="button">Надіслати</button>
+          </form>
+        </div>
+        
+        <!-- Resume Form -->
+        <div id="resume-tab" class="tab-content">
+          <form class="contact-form" id="resume-form" method="post" action="/submit-resume" enctype="multipart/form-data">
+            <label for="resume-name">Ім'я</label>
+            <input id="resume-name" name="name" type="text" placeholder="Ваше ім'я" required />
+
+            <label for="resume-email">Email</label>
+            <input id="resume-email" name="email" type="email" placeholder="Ваш email" required />
+
+            <label for="resume-phone">Телефон</label>
+            <input id="resume-phone" name="phone" type="tel" placeholder="Ваш телефон" />
+
+            <label for="resume-position">Бажана посада</label>
+            <input id="resume-position" name="position" type="text" placeholder="Бажана посада" />
+
+            <label for="resume-experience">Досвід роботи</label>
+            <textarea id="resume-experience" name="experience" rows="3" placeholder="Опишіть ваш досвід роботи"></textarea>
+
+            <label for="resume-skills">Навички</label>
+            <textarea id="resume-skills" name="skills" rows="3" placeholder="Ваші ключові навички"></textarea>
+
+            <label for="resume-message">Супровідний лист</label>
+            <textarea id="resume-message" name="message" rows="4" placeholder="Розкажіть, чому ви хочете працювати з нами"></textarea>
+
+            <label for="resume-file">Файл резюме (PDF, DOC, DOCX)</label>
+            <input id="resume-file" name="resume_file" type="file" accept=".pdf,.doc,.docx" />
+
+            <button type="submit" class="button">Надіслати резюме</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--alt">
+  <div class="container">
+    <h2 data-editable-id="contact-map-title">{{ page_content.elements.get('contact-map-title', 'Як нас знайти') }}</h2>
+    <div class="about-map">
+      <iframe 
+        src="https://maps.google.com/maps?q=47.986157904604724,33.43769694232847&z=17&output=embed"
+        width="100%" 
+        height="400" 
+        style="border:0; border-radius: 8px;" 
+        allowfullscreen="" 
+        loading="lazy">
+      </iframe>
+    </div>
+  </div>
+</section>
+
+<style>
+/* Success Modal */
+#successModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #28a745;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6c757d;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-body p {
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+  color: #495057;
+}
+
+.modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Flash messages */
+.flash-message {
+  padding: 12px 20px;
+  margin: 20px 0;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.flash-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.flash-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.flash-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.contact-grid {
+  display: grid;
+  gap: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-bottom: 3rem;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  background: var(--light);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.contact-info p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.contact-form-container {
+  padding: 22px;
+  background: var(--light);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.form-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #6c757d;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.tab-btn:hover {
+  color: #007bff;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.contact-form {
+  display: grid;
+  gap: 14px;
+}
+
+.contact-form label {
+  font-weight: 600;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+.contact-form textarea {
+  resize: vertical;
+}
+
+.contact-form button {
+  justify-self: start;
+}
+
+.about-map {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-tabs {
+    flex-direction: column;
+  }
+  
+  .tab-btn {
+    border-bottom: 1px solid #e9ecef;
+    border-right: none;
+  }
+  
+  .tab-btn.active {
+    border-bottom-color: #007bff;
+  }
+}
+</style>
+
+<script>
+function switchTab(tabName) {
+  // Hide all tabs
+  const tabContents = document.querySelectorAll('.tab-content');
+  tabContents.forEach(tab => tab.classList.remove('active'));
+  
+  // Remove active class from all buttons
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  tabButtons.forEach(btn => btn.classList.remove('active'));
+  
+  // Show selected tab
+  const selectedTab = document.getElementById(tabName + '-tab');
+  if (selectedTab) {
+    selectedTab.classList.add('active');
+  }
+  
+  // Add active class to clicked button
+  const clickedButton = document.querySelector(`.tab-btn[onclick*="'${tabName}'"]`);
+  if (clickedButton) {
+    clickedButton.classList.add('active');
+  }
+}
+
+function openSuccessModal() {
+  openModal('successModal');
+}
+
+function closeSuccessModal() {
+  closeModal('successModal');
+}
+
+// Handle resume form submission
+document.addEventListener('DOMContentLoaded', function() {
+  const resumeForm = document.getElementById('resume-form');
+  if (resumeForm) {
+    console.log('Resume form found:', resumeForm);
+    
+    resumeForm.addEventListener('submit', function(e) {
+      console.log('Resume form submit triggered');
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      console.log('Form data:', formData);
+      
+      fetch('/submit-resume', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Response:', data);
+        if (data.success) {
+          // Очищаем форму
+          this.reset();
+          // Показываем модальное окно
+          openSuccessModal();
+        } else {
+          alert('Помилка: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Помилка відправки: ' + error);
+      });
+    });
+  } else {
+    console.log('Resume form not found');
+  }
+});
+
+// Check if URL has success parameter to show modal
+window.addEventListener('load', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const hash = window.location.hash;
+  
+  // Show success modal if parameter exists
+  if (urlParams.get('resume_success') === 'true') {
+    openSuccessModal();
+    // Clean URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  
+  // Switch to resume tab if hash exists
+  if (hash === '#resume-tab') {
+    switchTab('resume');
+  }
+});
+</script>
+
+{% endblock %}

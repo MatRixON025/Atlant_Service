@@ -19,9 +19,6 @@
   "case_fridge_timer_replacement": "1000",
   "case_fridge_capillary_repair": "3500",
   "diagnostic_tv": 300.0,
-  "case_tv_crt_repair_14_17": "від 450",
-  "case_tv_crt_repair_20_21": "від 700",
-  "case_tv_crt_repair_25_32": "від 1000",
   "case_tv_lcd_led_repair_14": "від 1000",
   "case_tv_lcd_led_repair_21": "від 1500"
 }
