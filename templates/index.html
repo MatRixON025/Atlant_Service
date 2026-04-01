@@ -171,13 +171,24 @@
   const brandsData = {{ brands|tojson|safe }};
 
   function openBrandModal(brandId) {
+    console.log('Opening brand modal for:', brandId);
     const brand = brandsData[brandId];
-    if (!brand) return;
+    if (!brand) {
+      console.log('Brand not found:', brandId);
+      return;
+    }
 
     const modal = document.getElementById('brandModal');
+    if (!modal) {
+      console.log('Modal element not found');
+      return;
+    }
+    
     const serviceInfo = document.getElementById('brandServiceInfo');
     const logoImg = document.getElementById('brandModalLogo');
     const requirementsDiv = document.querySelector('.modal__requirements');
+    
+    console.log('Modal elements found:', { serviceInfo, logoImg, requirementsDiv });
 
     // Set brand information
     serviceInfo.textContent = brand.service_info;
@@ -244,8 +255,10 @@
     }
 
     // Show modal
+    console.log('Adding modal--open class to modal');
     modal.classList.add('modal--open');
     modal.setAttribute('aria-hidden', 'false');
+    console.log('Modal opened, classes:', modal.className);
   }
 
   function closeBrandModal() {
@@ -258,10 +271,12 @@
   document.addEventListener('click', (event) => {
     const img = event.target.closest('[data-brand]');
     if (img) {
+      console.log('Brand clicked:', img.getAttribute('data-brand'));
       openBrandModal(img.getAttribute('data-brand'));
     }
 
     if (event.target.closest('[data-close]')) {
+      console.log('Close button clicked');
       closeBrandModal();
     }
   });
