@@ -211,6 +211,7 @@ class PageEditor {
     // Смена страницы
     document.getElementById('page-select').addEventListener('change', (e) => {
       this.currentPage = e.target.value;
+      console.log('Page changed to:', this.currentPage);
       this.loadPage();
     });
     
@@ -637,6 +638,13 @@ class PageEditor {
   
   async publish() {
     console.log('Publish button clicked');
+    console.log('Current page value:', this.currentPage);
+    
+    // Проверяем значение из селектора
+    const pageSelect = document.getElementById('page-select');
+    const selectedPage = pageSelect ? pageSelect.value : this.currentPage;
+    console.log('Selected from dropdown:', selectedPage);
+    
     await this.save();
     
     // Здесь можно добавить логику публикации
@@ -646,8 +654,9 @@ class PageEditor {
     
     // Перенаправляем на страницу для проверки в текущей вкладке
     setTimeout(() => {
-      console.log('Redirecting to:', '/' + this.currentPage);
-      window.location.href = '/' + this.currentPage;
+      const redirectPage = selectedPage || this.currentPage;
+      console.log('Final redirect page:', redirectPage);
+      window.location.href = '/' + redirectPage;
     }, 1000);
   }
   

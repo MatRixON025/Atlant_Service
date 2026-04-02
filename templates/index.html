@@ -53,7 +53,7 @@
       <div class="about-text">
         <p>
           <strong>Atlant Service</strong> — авторизований сервісний центр з ремонту побутової техніки в Кривому Розі.
-          Наші майстри працюють понад 10 років, використовують тільки оригінальні запчастини
+          Наші майстри працюють понад 22 роки, використовують тільки оригінальні запчастини
           та одразу дають гарантію на роботи.
         </p>
         <p>
@@ -70,7 +70,7 @@
             <p>3 місяці гарантії на всі виконані роботи</p>
           </div>
           <div class="feature">
-            <h4>Досвід 10+ років</h4>
+            <h4>Досвід 22+ роки</h4>
             <p>Авторизований сервіс провідних брендів</p>
           </div>
           <div class="feature">
@@ -288,8 +288,59 @@
     }
   });
 
+  // Форматирование номера телефона
+  function formatPhoneNumber(input) {
+    let value = input.value.replace(/\D/g, '');
+    
+    // Если пусто, не форматируем
+    if (value.length === 0) return;
+    
+    // Убираем 38 спереди если есть
+    if (value.startsWith('38')) {
+      value = value.slice(2);
+    }
+    
+    // Убираем 0 спереди если есть (оставляем остаток)
+    if (value.startsWith('0')) {
+      value = value.slice(1);
+    }
+    
+    // Форматируем: +38 (0XX) XXX-XX-XX
+    if (value.length > 0) {
+      if (value.length <= 2) {
+        input.value = '+38 (0' + value;
+      } else if (value.length <= 5) {
+        input.value = '+38 (0' + value.slice(0, 2) + ') ' + value.slice(2);
+      } else if (value.length <= 7) {
+        input.value = '+38 (0' + value.slice(0, 2) + ') ' + value.slice(2, 5) + '-' + value.slice(5);
+      } else if (value.length <= 9) {
+        input.value = '+38 (0' + value.slice(0, 2) + ') ' + value.slice(2, 5) + '-' + value.slice(5, 7) + '-' + value.slice(7);
+      } else {
+        input.value = '+38 (0' + value.slice(0, 2) + ') ' + value.slice(2, 5) + '-' + value.slice(5, 7) + '-' + value.slice(7, 9);
+      }
+    }
+  }
+
+  function addPhonePrefix(input) {
+    // Добавляем +38 (0 только если поле пусто
+    if (input.value.trim() === '') {
+      input.value = '+38 (0';
+    }
+  }
+
   // Auto-hide flash notifications
   document.addEventListener('DOMContentLoaded', function() {
+    // Подключаем форматирование номера телефона в контактной форме
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+      phoneInput.addEventListener('focus', function() {
+        addPhonePrefix(this);
+      });
+      phoneInput.addEventListener('input', function() {
+        formatPhoneNumber(this);
+      });
+    }
+    
     const flashContainer = document.querySelector('.flash');
     if (flashContainer && flashContainer.children.length > 0) {
       // Auto-hide after 5 seconds
@@ -486,7 +537,7 @@
     padding: 1.5rem;
     background: #f8f9fa;
     border-radius: 8px;
-    border-left: 4px solid #06cbffad;
+    border-left: 4px solid #1e7bd7;
   }
 
   .feature h4 {
