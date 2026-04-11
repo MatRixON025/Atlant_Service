@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<section class="nameplate-info section">
+  <div class="container">
+    <div class="nameplate-info__panel">
+      <h1 class="nameplate-info__title">Що таке паспортна табличка (шильдик)?</h1>
+      <p class="nameplate-info__lead">
+        Що таке шильдик? – це заводська бирка (сервісна наліпка) із зазначенням технічних та сервісних характеристик товару. На шильдику вказано точну модель та номер виробу (PNC або Prod.No), без цієї інформації неможливо правильно підібрати запчастину для вашого приладу.
+      </p>
+
+      <p class="nameplate-info__photo-label">Приклад шильдика</p>
+
+      <figure class="nameplate-info__figure">
+        <img
+          src="{{ url_for('static', filename='img/gallery/nameplate-example.jpg') }}"
+          alt="Приклад паспортної таблички (шильдика)"
+          class="nameplate-info__img"
+          width="720"
+          loading="lazy"
+        />
+        <figcaption class="nameplate-info__caption">
+          <span class="nameplate-info__caption-title">Приклад паспортної таблички (шильдика)</span>
+          
+        </figcaption>
+      </figure>
+
+      <div class="nameplate-info__body">
+        <p>
+          Шильдик (заводська табличка з моделлю та серійним номером) зазвичай розміщується у прихованих, але доступних місцях: на задній панелі, всередині дверцят люка, під нижньою панеллю, на бічних стінках всередині камери (у холодильниках) або на торці дверцят. Це наліпка сріблястого/білого кольору або відбиток.
+        </p>
+      </div>
+
+      <p class="nameplate-info__back">
+        <a href="{{ url_for('index') }}">← На головну</a>
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}

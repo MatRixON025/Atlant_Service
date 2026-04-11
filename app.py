@@ -383,10 +383,10 @@ def load_pages_content():
             # Create default pages content
             default_content = {
                 "index": {
-                    "title": "Atlant Service — Сервіс побутової техніки",
+                    "title": "Атлант Сервіс — Сервіс побутової техніки",
                     "elements": {
                         "hero-title": "Професійний ремонт побутової техніки у Кривому Розі",
-                        "hero-subtitle": "Сервісний центр Atlant Service пропонує гарантійний та не гарантійний ремонт побутової техніки всіх брендів",
+                        "hero-subtitle": "Сервісний центр Атлант Сервіс пропонує гарантійний та не гарантійний ремонт побутової техніки всіх брендів",
                         "hero-cta": "Замовити виклик майстра"
                     }
                 }
@@ -414,9 +414,32 @@ def load_brands():
     try:
         brands_path = DATA_DIR / "brands.json"
         if brands_path.exists():
-            brands = json.loads(brands_path.read_text(encoding="utf-8"))
-            print(f"DEBUG: Loaded brands from file: {brands}")  # Отладка
-            return brands
+            raw_brands = json.loads(brands_path.read_text(encoding="utf-8"))
+            normalized_brands = {}
+            for brand_id, brand_data in raw_brands.items():
+                if isinstance(brand_data, str):
+                    brand_data = {"service_info": brand_data}
+                elif not isinstance(brand_data, dict):
+                    brand_data = {}
+
+                requirements = brand_data.get("requirements", [])
+                if isinstance(requirements, str):
+                    requirements = requirements.splitlines()
+                elif not isinstance(requirements, list):
+                    requirements = []
+
+                requirements = [
+                    str(item).strip()
+                    for item in requirements
+                    if str(item).strip()
+                ]
+
+                normalized_brands[brand_id] = {
+                    **brand_data,
+                    "requirements": requirements,
+                }
+
+            return normalized_brands
         else:
             # Create default brands file with dictionary structure
             default_brands = {
@@ -584,8 +607,6 @@ def load_services():
 
 # Initialize data from files
 CONTACT = load_contact()
-BRANDS = load_brands()
-SERVICES = load_services()
 
 
 def load_vacancies():
@@ -660,7 +681,7 @@ def send_email_notification(subject, message, to_email=None):
                 </div>
                 <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
                 <p style="color: #6c757d; font-size: 14px; margin-bottom: 0;">
-                    Це автоматичне сповіщення від системи адміністрування Atlant Service.<br>
+                    Це автоматичне сповіщення від системи адміністрування Атлант Сервіс.<br>
                     Будь ласка, не відповідайте на цей лист.
                 </p>
             </div>
@@ -729,7 +750,7 @@ def send_contact_email(name, phone, message):
         msg = MIMEMultipart()
         msg['From'] = email_username
         msg['To'] = admin_email
-        msg['Subject'] = f"Нове звернення з сайту Atlant Service - {name}"
+        msg['Subject'] = f"Нове звернення з сайту Атлант Сервіс - {name}"
         
         # Create HTML body for contact email
         html_body = f"""
@@ -750,7 +771,7 @@ def send_contact_email(name, phone, message):
                 </div>
                 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 12px;">
-                    <p style="margin: 0;">Це повідомлення було автоматично надіслано з контактної форми сайту Atlant Service.</p>
+                    <p style="margin: 0;">Це повідомлення було автоматично надіслано з контактної форми сайту Атлант Сервіс.</p>
                     <p style="margin: 5px 0;">Будь ласка, зв'яжіться з клієнтом якомога швидше.</p>
                 </div>
             </div>
@@ -791,7 +812,7 @@ def send_contact_email(name, phone, message):
 def authenticate():
     """Return authentication response"""
     return Response(
-        "Увійдіть для доступу", 401, {"WWW-Authenticate": "Basic realm=\"Atlant Service Admin\""}
+        "Увійдіть для доступу", 401, {"WWW-Authenticate": "Basic realm=\"Атлант Сервіс Admin\""}
     )
 
 
@@ -947,8 +968,8 @@ def inject_globals():
     return {
         "current_year": datetime.now().year,
         "contact": CONTACT,
-        "brands": BRANDS,
-        "services": SERVICES,
+        "brands": load_brands(),
+        "services": load_services(),
         "vacancies": load_vacancies(),
     }
 
@@ -998,11 +1019,21 @@ def warranty():
     return response
 
 
+@app.route("/shildik")
+def nameplate_info():
+    """Приклад паспортної таблички (шильдика) — фото та текст можна змінити в шаблоні та static/img/gallery/."""
+    return render_template("nameplate_info.html")
+
+
 @app.route("/admin/page-editor")
 @requires_auth
 def admin_page_editor():
     """Visual page editor"""
-    return render_template("admin_page_editor.html", active_tab="editor")
+    response = app.make_response(render_template("admin_page_editor.html", active_tab="editor"))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @app.route("/api/pages-content", methods=["GET", "POST"])
 def api_pages_content():
@@ -1608,6 +1639,7 @@ def admin_brands():
     """Admin brands management page"""
     if request.method == "POST":
         try:
+            is_ajax = request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest"
             # Handle JSON requests (AJAX)
             if request.is_json:
                 data = request.get_json()
@@ -1618,11 +1650,12 @@ def admin_brands():
             brand_id = data.get("brand_id", "").strip().lower()
             brand_name = data.get("brand_name", "").strip()
             service_info = data.get("service_info", "").strip()
-            requirements = data.get("requirements", "").strip()
+            requirements_text = data.get("requirements", "").strip()
+            requirements = [line.strip() for line in requirements_text.splitlines() if line.strip()]
             original_brand_id = data.get("original_brand_id", "").strip().lower()
             
             if not brand_id or not brand_name or not service_info:
-                if request.is_json:
+                if is_ajax:
                     return jsonify({"success": False, "error": "Заповніть обов'язкові поля!"})
                 flash("Заповніть обов'язкові поля!", "error")
                 return redirect(url_for("admin_brands"))
@@ -1640,7 +1673,7 @@ def admin_brands():
             brands[brand_id] = {
                 "name": brand_name,
                 "service_info": service_info,
-                "requirements": requirements.split('\n') if requirements else []
+                "requirements": requirements
             }
             
             # Handle logo file upload
@@ -1662,16 +1695,16 @@ def admin_brands():
             brands_path = DATA_DIR / "brands.json"
             brands_path.write_text(json.dumps(brands, ensure_ascii=False, indent=2), encoding="utf-8")
             
-            if request.is_json:
+            if is_ajax:
                 return jsonify({"success": True, "message": "Інформацію про бренд успішно збережено!"})
             flash("Інформацію про бренд успішно збережено!", "success")
             
         except Exception as e:
-            if request.is_json:
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return jsonify({"success": False, "error": str(e)})
             flash(f"Помилка збереження: {e}", "error")
         
-        if not request.is_json:
+        if not (request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest"):
             return redirect(url_for("admin_brands"))
     
     brands = load_brands()
@@ -1976,7 +2009,7 @@ def test_email():
         msg = MIMEMultipart()
         msg['From'] = settings['email_username']
         msg['To'] = settings['admin_email']
-        msg['Subject'] = "Тестове повідомлення з Atlant Service"
+        msg['Subject'] = "Тестове повідомлення з Атлант Сервіс"
         
         body = "Це тестове повідомлення для перевірки налаштувань Email."
         msg.attach(MIMEText(body, 'plain', 'utf-8'))

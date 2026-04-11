@@ -3,6 +3,27 @@
  * Поддерживает открытие и закрытие любых модалей
  */
 
+/** Блокировка прокрутки body: включаем только если реально открыта хотя бы одна .modal.modal--open */
+function syncBodyScrollLock() {
+  const modals = document.querySelectorAll('.modal.modal--open');
+  let anyVisible = false;
+  for (let i = 0; i < modals.length; i++) {
+    const m = modals[i];
+    const cs = window.getComputedStyle(m);
+    if (cs.display !== 'none' && cs.visibility !== 'hidden') {
+      anyVisible = true;
+      break;
+    }
+  }
+  if (anyVisible) {
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = getScrollbarWidth() + 'px';
+  } else {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  }
+}
+
 // Открыть модальное окно  
 function openModal(modalId) {
   const modal = document.getElementById(modalId);
@@ -13,19 +34,17 @@ function openModal(modalId) {
   
   modal.style.display = 'flex';
   modal.classList.add('modal--open');
-  document.body.style.overflow = 'hidden';
-  document.body.style.paddingRight = getScrollbarWidth() + 'px';
+  syncBodyScrollLock();
 }
 
 // Закрыть модальное окно
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
-  if (!modal) return;
-  
-  modal.style.display = 'none';
-  modal.classList.remove('modal--open');
-  document.body.style.overflow = '';
-  document.body.style.paddingRight = '';
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('modal--open');
+  }
+  syncBodyScrollLock();
 }
 
 // Получить ширину скроллбара
@@ -64,14 +83,13 @@ document.addEventListener('click', function(event) {
 // Закрытие модальных окон при нажатии ESC
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') {
-    // Закрываем все открытые модали
-    const openModals = document.querySelectorAll('.modal--open, .modal[style*="display: flex"]');
-    openModals.forEach(modal => {
-      const modalId = modal.id;
-      if (modalId) {
-        closeModal(modalId);
+    const openModals = document.querySelectorAll('.modal.modal--open');
+    openModals.forEach(function(modal) {
+      if (modal.id) {
+        closeModal(modal.id);
       }
     });
+    syncBodyScrollLock();
   }
 });
 

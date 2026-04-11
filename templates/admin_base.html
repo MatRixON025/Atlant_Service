@@ -1,12 +1,14 @@
 {% extends "layout.html" %}
 
+{% block body_class %}admin-body{% endblock %}
+
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 {% endblock %}
 
 {% block body %}
 <!-- Universal modal script at the beginning -->
-<script src="{{ url_for('static', filename='js/modals.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modals.js') }}?v=2"></script>
 
 <div class="admin-layout">
   {% include 'admin_nav.html' %}

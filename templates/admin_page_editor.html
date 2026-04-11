@@ -28,21 +28,21 @@
     </div>
     
     <div class="control-group">
-      <button id="edit-mode-btn" class="btn btn--primary" style="padding: 8px 16px;">
+      <button id="edit-mode-btn" type="button" class="btn btn--primary" style="padding: 8px 16px;">
         <span id="mode-text">Режим редагування</span>
       </button>
     </div>
     
     <div class="control-group">
-      <button id="preview-btn" class="btn btn--secondary" style="padding: 8px 16px;">Нове вікно</button>
+      <button id="preview-btn" type="button" class="btn btn--secondary" style="padding: 8px 16px;">Нове вікно</button>
     </div>
     
     <div class="control-group">
-      <button id="save-btn" class="btn btn--success" style="padding: 8px 16px;">💾 Зберегти</button>
+      <button id="save-btn" type="button" class="btn btn--success" style="padding: 8px 16px;">💾 Зберегти</button>
     </div>
     
     <div class="control-group">
-      <button id="publish-btn" class="btn btn--warning" style="padding: 8px 16px;">🚀 Опублікувати</button>
+      <button id="publish-btn" type="button" class="btn btn--warning" style="padding: 8px 16px;">🚀 Опублікувати</button>
     </div>
   </div>
   
@@ -222,22 +222,28 @@ class PageEditor {
     });
     
     // Режим редактирования
-    document.getElementById('edit-mode-btn').addEventListener('click', () => {
+    document.getElementById('edit-mode-btn').addEventListener('click', (e) => {
+      e.preventDefault();
       this.toggleEditMode();
     });
     
     // Предпросмотр в новом окне
-    document.getElementById('preview-btn').addEventListener('click', () => {
+    document.getElementById('preview-btn').addEventListener('click', (e) => {
+      e.preventDefault();
       window.open('/' + this.currentPage, '_blank');
     });
     
     // Сохранение
-    document.getElementById('save-btn').addEventListener('click', () => {
+    document.getElementById('save-btn').addEventListener('click', (e) => {
+      e.preventDefault();
       this.save();
     });
     
     // Публикация
-    document.getElementById('publish-btn').addEventListener('click', () => {
+    document.getElementById('publish-btn').addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
       this.publish();
     });
     
@@ -637,27 +643,10 @@ class PageEditor {
   }
   
   async publish() {
-    console.log('Publish button clicked');
-    console.log('Current page value:', this.currentPage);
-    
-    // Проверяем значение из селектора
-    const pageSelect = document.getElementById('page-select');
-    const selectedPage = pageSelect ? pageSelect.value : this.currentPage;
-    console.log('Selected from dropdown:', selectedPage);
-    
     await this.save();
     
-    // Здесь можно добавить логику публикации
-    // Например, очистка кеша, уведомления и т.д.
-    
-    this.showStatus('Опубліковано успішно!', 'success');
-    
-    // Перенаправляем на страницу для проверки в текущей вкладке
-    setTimeout(() => {
-      const redirectPage = selectedPage || this.currentPage;
-      console.log('Final redirect page:', redirectPage);
-      window.location.href = '/' + redirectPage;
-    }, 1000);
+    // Публикация без перехода: остаемся в редакторе.
+    this.showStatus('Опубліковано успішно! Ви залишаєтесь у редакторі.', 'success');
   }
   
   showStatus(message, type = 'info') {

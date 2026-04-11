@@ -1,0 +1,16 @@
+{
+  "include": ["app.py", "test_brands.py"],
+  "exclude": ["**/__pycache__", ".venv", "venv"],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": false,
+  "reportUnknownMemberType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownParameterType": "none",
+  "reportMissingParameterType": "none",
+  "reportMissingTypeArgument": "none",
+  "reportUnusedImport": "information",
+  "reportPrivateImportUsage": "none"
+}

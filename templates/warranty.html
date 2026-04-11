@@ -44,7 +44,7 @@
         <button 
           class="brand-card__button" 
           onclick="openBrandModal('{{ brand_id }}')"
-          title="Клікніть для підробностей"
+          title="Клікніть для подробиць"
         >
           <img 
             src="{{ url_for('static', filename='img/brands/' + brand_id + '.png') }}" 
@@ -52,7 +52,7 @@
             class="brand-card__logo"
           />
         </button>
-        <p class="brand-card__name">{{ brand_id.capitalize() }}</p>
+        <p class="brand-card__name">{{ brand_data.name or brand_id.upper() }}</p>
       </div>
       {% endfor %}
     </div>
@@ -92,8 +92,22 @@
   </div>
 </div>
 
+
+
+
 <script>
   const brandsData = {{ brands|tojson|safe }};
+  const NAMEPLATE_INFO_URL = "{{ url_for('nameplate_info') }}";
+
+  function appendNameplateRequirement(requirementsDiv) {
+    const row = document.createElement("div");
+    row.className = "requirement-item requirement-item--nameplate";
+    row.innerHTML =
+      '<span class="requirement-icon">🏷️</span><span class="requirement-text"><a href="' +
+      NAMEPLATE_INFO_URL +
+      '" class="requirement-link" target="_blank" rel="noopener noreferrer">Обов\'язково сфотографувати паспортну табличку (шильдик)</a></span>';
+    requirementsDiv.appendChild(row);
+  }
 
   function openBrandModal(brandId) {
     const brand = brandsData[brandId];
@@ -102,75 +116,80 @@
     const modal = document.getElementById('brandModal');
     const serviceInfo = document.getElementById('brandServiceInfo');
     const logoImg = document.getElementById('brandModalLogo');
-    const requirementsDiv = document.querySelector('.modal__requirements');
+    const requirementsDiv = modal ? modal.querySelector('.modal__requirements') : null;
+    if (!modal || !serviceInfo || !logoImg || !requirementsDiv) return;
 
     // Set brand information
     serviceInfo.textContent = brand.service_info;
     logoImg.src = "{{ url_for('static', filename='img/brands/') }}" + brandId + ".png";
     logoImg.alt = brandId;
 
-    // Special requirements for specific brands
-    const specialBrands = ['daewoo', 'vestfrost', 'candy', 'haier', 'hansa', 'edler'];
-    const waterHeaterBrands = ['scandix', 'atlantic', 'round', 'gorenje', 'interlux'];
-    const quartzTermexBrands = ['quartz', 'termex'];
-    
-    if (specialBrands.includes(brandId)) {
-      requirementsDiv.innerHTML = `
-        <div class="requirement-item">
-          <span class="requirement-icon">📝</span>
-          <span>Ксерокопії чека і гарантійного талона</span>
-        </div>
-      `;
-    } else if (waterHeaterBrands.includes(brandId)) {
-      requirementsDiv.innerHTML = `
-        <div class="requirement-item">
-          <span class="requirement-icon">📝</span>
-          <span>Гарантійний талон</span>
-        </div>
-        <div class="requirement-item">
-          <span class="requirement-icon">📸</span>
-          <span>Фото чека</span>
-        </div>
-        <div class="requirement-item">
-          <span class="requirement-icon">🔥</span>
-          <span>Для водонагрівачів: обов'язкове регулярне ТО (профілактика), авторизованим сервісним центром, відповідно до умов в гарантійному талоні</span>
-        </div>
-      `;
-    } else if (quartzTermexBrands.includes(brandId)) {
-      requirementsDiv.innerHTML = `
-        <div class="requirement-item">
-          <span class="requirement-icon">📝</span>
-          <span>Гарантійний талон з печаткою магазину</span>
-        </div>
-        <div class="requirement-item">
-          <span class="requirement-icon">📸</span>
-          <span>Фото чека</span>
-        </div>
-        <div class="requirement-item">
-          <span class="requirement-icon">📞</span>
-          <span>З гарантійного ремонту звертатися на пряму в Atlant Service</span>
-        </div>
-      `;
+    // Requirements only from brands.json
+    const requirements = Array.isArray(brand.requirements)
+      ? brand.requirements.filter((item) => typeof item === 'string' && item.trim().length > 0)
+      : [];
+
+    const parseRequirement = (item) => {
+      const match = item.match(/^([📝📸🔥📞ℹ️])\s*(.*)$/u);
+      if (match) {
+        return { icon: match[1], text: match[2].trim() };
+      }
+      return { icon: '📝', text: item.trim() };
+    };
+
+    const normalizeRequirements = (items) => {
+      const normalized = [];
+      let pendingIcon = null;
+
+      items.forEach((item) => {
+        const parsed = parseRequirement(item);
+
+        if (!parsed.text) {
+          pendingIcon = parsed.icon;
+          return;
+        }
+
+        normalized.push({
+          icon: pendingIcon || parsed.icon,
+          text: parsed.text
+        });
+        pendingIcon = null;
+      });
+
+      return normalized;
+    };
+
+    if (requirements.length > 0) {
+      const normalizedRequirements = normalizeRequirements(requirements);
+      requirementsDiv.innerHTML = normalizedRequirements
+        .map((parsed) => {
+          return `
+          <div class="requirement-item">
+            <span class="requirement-icon">${parsed.icon}</span>
+            <span>${parsed.text}</span>
+          </div>
+        `;
+        })
+        .join('');
     } else {
       requirementsDiv.innerHTML = `
         <div class="requirement-item">
-          <span class="requirement-icon">📝</span>
-          <span>Гарантійний талон</span>
-        </div>
-        <div class="requirement-item">
-          <span class="requirement-icon">📸</span>
-          <span>Фото чека</span>
+          <span class="requirement-icon">ℹ️</span>
+          <span>Для цього бренду вимоги не вказані</span>
         </div>
       `;
     }
 
-    // Show modal
-    modal.classList.add('modal--open');
+    appendNameplateRequirement(requirementsDiv);
+
+    modal.setAttribute('aria-hidden', 'false');
+    openModal('brandModal');
   }
 
   function closeBrandModal() {
-    const modal = document.getElementById('brandModal');
-    modal.classList.remove('modal--open');
+    closeModal('brandModal');
+    const m = document.getElementById('brandModal');
+    if (m) m.setAttribute('aria-hidden', 'true');
   }
 
   // Event listeners for modal closing
@@ -185,6 +204,7 @@
     if (event.key === 'Escape') {
       closeBrandModal();
     }
+    
   });
 </script>
 

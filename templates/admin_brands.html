@@ -19,12 +19,13 @@
           <h3 class="brand-name">{{ brand_id.upper() }}</h3>
         </div>
         <div class="brand-actions">
-          <button class="btn btn--small btn--edit" onclick="console.log('Клик по кнопке редактирования'); testEditBrand('{{ brand_id }}')">Редагувати</button>
-          <button class="btn btn--small btn--delete" onclick="console.log('Клик по кнопке удаления'); testDeleteBrand('{{ brand_id }}')">Видалити</button>
+          <button class="btn btn--small btn--edit" onclick="testEditBrand('{{ brand_id }}')">Редагувати</button>
+          <button class="btn btn--small btn--delete" onclick="testDeleteBrand('{{ brand_id }}')">Видалити</button>
         </div>
       </div>
       <div class="brand-info">
         <p class="brand-service-info">{{ brand_info.service_info }}</p>
+        <pre class="brand-requirements-data" style="display: none;">{{ (brand_info.requirements or [])|join('\n') }}</pre>
       </div>
     </div>
     {% endfor %}
@@ -98,6 +99,22 @@
 document.addEventListener('DOMContentLoaded', function() {
   const modal = document.getElementById('brandModal');
   const form = document.getElementById('brandForm');
+  const logoInput = document.getElementById('logo_file');
+  function closeBrandModal() {
+    closeModal('brandModal');
+  }
+  window.closeBrandModal = closeBrandModal;
+
+  
+  async function parseApiResponse(res) {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return res.json();
+    }
+    const text = await res.text();
+    const preview = text.replace(/\s+/g, ' ').slice(0, 120);
+    throw new Error(`Сервер повернув не JSON (HTTP ${res.status}): ${preview}`);
+  }
   
   // Открыть модальное окно добавления
   window.openAddBrandModal = function() {
@@ -114,11 +131,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!brandCard) return;
     
     const serviceInfo = brandCard.querySelector('.brand-service-info')?.textContent || '';
+    const requirements = brandCard.querySelector('.brand-requirements-data')?.textContent || '';
     
     document.getElementById('modalTitle').textContent = 'Редагувати бренд';
     document.getElementById('brand_id').value = brandId;
     document.getElementById('brand_name').value = brandId.toUpperCase();
     document.getElementById('service_info').value = serviceInfo;
+    document.getElementById('requirements').value = requirements.trim();
     document.getElementById('originalBrandId').value = brandId;
     
     const logo = document.getElementById('logo_preview_img');
@@ -136,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     })
-    .then(res => res.json())
+    .then(parseApiResponse)
     .then(data => {
       if (data.success) {
         location.reload();
@@ -144,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Помилка: ' + data.error);
       }
     })
-    .catch(err => alert('Помилка: ' + err));
+    .catch(err => alert('Помилка: ' + (err.message || err)));
   };
   
   // Обработка формы
@@ -154,19 +173,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const formData = new FormData(this);
     
     // Если есть файл логотипа
-    if (document.getElementById('logo_file').files.length > 0) {
+    if (logoInput.files.length > 0) {
       fetch('/admin/brands', {
         method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
         body: formData
       })
-      .then(res => res.json())
+      .then(parseApiResponse)
       .then(data => {
         if (data.success) {
           location.reload();
         } else {
           alert('Помилка: ' + data.error);
         }
-      });
+      })
+      .catch(err => alert('Помилка: ' + err.message));
     } else {
       // Отправляем как JSON
       const data = {
@@ -185,19 +208,20 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         body: JSON.stringify(data)
       })
-      .then(res => res.json())
+      .then(parseApiResponse)
       .then(data => {
         if (data.success) {
           location.reload();
         } else {
           alert('Помилка: ' + data.error);
         }
-      });
+      })
+      .catch(err => alert('Помилка: ' + err.message));
     }
   });
   
   // Превью логотипа
-  document.getElementById('logo_file').addEventListener('change', function(e) {
+  logoInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();

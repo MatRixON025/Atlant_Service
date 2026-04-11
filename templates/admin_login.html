@@ -1,12 +1,14 @@
 {% extends "layout.html" %}
 
+{% block body_class %}admin-body{% endblock %}
+
 {% block body %}
 <div class="admin-login-container">
   <div class="admin-login-card">
     <div class="admin-login-header">
-      <img src="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" alt="Atlant Service" class="admin-login-logo">
+      <img src="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" alt="Атлант Сервіс" class="admin-login-logo">
       <h1>Адмін-панель</h1>
-      <p>Atlant Service</p>
+      <p>Атлант Сервіс</p>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}

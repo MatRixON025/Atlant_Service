@@ -130,12 +130,6 @@
   gap: 10px;
 }
 
-.modal__requirements {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .requirement-item {
   display: flex;
   align-items: flex-start;
@@ -145,6 +139,21 @@
   border-radius: 0;
   border: none;
   transition: none;
+}
+
+.requirement-item--nameplate .requirement-text {
+  line-height: 1.45;
+}
+
+.requirement-link {
+  color: #0b63c9;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.requirement-link:hover {
+  color: #084a97;
 }
 
 .requirement-item:hover {

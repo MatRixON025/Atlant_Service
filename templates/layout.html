@@ -6,10 +6,10 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Atlant Service — Сервіс побутової техніки</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=99998" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=99998" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}?v=99998" />
+    <title>Атлант Сервіс — Сервіс побутової техніки</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=99999" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=99999" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}?v=99999" />
     <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" />
     
     <!-- Page Editor Script (только в режиме редактирования) -->
@@ -17,16 +17,16 @@
     <script src="{{ url_for('static', filename='js/page-editor-iframe.js') }}"></script>
     {% endif %}
   </head>
-  <body>
+  <body class="{% block body_class %}site-page-bg{% endblock %}">
     <!-- Universal modal script - load early for onclick handlers -->
-    <script src="{{ url_for('static', filename='js/modals.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/modals.js') }}?v=2"></script>
     
     {% if not hide_header %}
     <header class="site-header">
       <div class="container">
         <a class="brand" href="/">
-          <img src="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" alt="Atlant Service" class="brand-logo" />
-          Atlant Service
+          <img src="{{ url_for('static', filename='img/gallery/service-logo.jpg') }}" alt="Атлант Сервіс" class="brand-logo" />
+          Атлант Сервіс
         </a>
         <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Відкрити меню">
           <span></span>
@@ -42,6 +42,10 @@
           <div class="nav-phones">
             <a href="tel:+380676396303">+38 (067) 639-63-03</a>
             <a href="tel:+380972512444">+38 (097) 251-24-44</a>
+          </div>
+          <div class="nav-divider">
+           <a href="{{ url_for('contact') }}">Понеділок – П'ятниця: 9:00 – 18:00</a>
+           <a href="{{ url_for('contact') }}">Субота – Неділя: вихідні</a>
           </div>
         </nav>
       </div>
@@ -68,7 +72,7 @@
       <div class="container">
         <div class="footer-content">
           <div class="footer-text">
-            <p>© {{ current_year }} Atlant Service. Усі права захищені.</p>
+            <p>© {{ current_year }} Атлант Сервіс. Усі права захищені.</p>
             <p>
               <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
             </p>
