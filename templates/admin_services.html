@@ -63,6 +63,7 @@
             <div id="pricesContainer">
               <!-- Цены будут загружены динамически -->
             </div>
+            <button type="button" class="btn btn-secondary btn-add-case" id="addCaseBtn">+ Додати роботу</button>
           </div>
         </div>
         
@@ -81,6 +82,42 @@
 const servicesData = {{ services|tojson|safe }};
 const pricesData = {{ prices|tojson|safe }};
 let currentService = null;
+let caseCounter = 0;
+
+function makeServiceId(title) {
+  return (title || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9а-яіїєґ]+/gi, '_')
+    .replace(/^_+|_+$/g, '') || `service_${Date.now()}`;
+}
+
+function makeCaseId(name) {
+  const normalized = (name || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9а-яіїєґ]+/gi, '_')
+    .replace(/^_+|_+$/g, '');
+  caseCounter += 1;
+  return normalized || `case_${Date.now()}_${caseCounter}`;
+}
+
+function createCaseRow(caseItem = {}, serviceId = '') {
+  const caseId = caseItem.id || makeCaseId(caseItem.name);
+  const priceKey = serviceId ? `case_${serviceId}_${caseId}` : '';
+  const currentPrice = priceKey ? (pricesData[priceKey] || caseItem.price || '') : (caseItem.price || '');
+  
+  const row = document.createElement('div');
+  row.className = 'case-row';
+  row.dataset.caseId = caseId;
+  row.innerHTML = `
+    <input type="hidden" class="case-id" value="${caseId}">
+    <input type="text" class="case-name" value="${caseItem.name || ''}" placeholder="Назва роботи" autocomplete="off">
+    <input type="text" class="case-price" value="${currentPrice}" placeholder="Ціна" autocomplete="off">
+    <button type="button" class="btn-remove-case" title="Видалити роботу">✕</button>
+  `;
+  return row;
+}
 
 // Функции модального окна
 function openServiceModal(serviceId = null) {
@@ -131,21 +168,21 @@ function loadServicePrices(service) {
   
   if (service.non_warranty_cases && service.non_warranty_cases.length > 0) {
     service.non_warranty_cases.forEach(caseItem => {
-      const priceKey = `case_${service.id}_${caseItem.id}`;
-      const currentPrice = pricesData[priceKey] || caseItem.price || '0';
-      
-      const priceItem = document.createElement('div');
-      priceItem.className = 'price-item';
-      priceItem.innerHTML = `
-        <label>${caseItem.name}</label>
-        <input type="text" name="${priceKey}" value="${currentPrice}" placeholder="${caseItem.price}" autocomplete="off">
-      `;
-      container.appendChild(priceItem);
+      container.appendChild(createCaseRow(caseItem, service.id));
     });
-  } else {
-    container.innerHTML = '<div class="no-prices">Немає налаштованих робіт для цієї послуги</div>';
   }
 }
+
+document.getElementById('addCaseBtn').addEventListener('click', function() {
+  const container = document.getElementById('pricesContainer');
+  container.appendChild(createCaseRow());
+});
+
+document.getElementById('pricesContainer').addEventListener('click', function(event) {
+  if (event.target.classList.contains('btn-remove-case')) {
+    event.target.closest('.case-row')?.remove();
+  }
+});
 
 function deleteService() {
   if (!currentService || !confirm('Видалити послугу?')) return;
@@ -175,11 +212,25 @@ document.getElementById('serviceForm').addEventListener('submit', function(e) {
     data[key] = value;
   }
   
-  // Добавляем цены из полей
-  const priceInputs = document.querySelectorAll('#pricesContainer input');
-  priceInputs.forEach(input => {
-    data[input.name] = input.value;
+  // Генерируем service_id при добавлении новой услуги
+  if (!currentService) {
+    data.service_id = makeServiceId(data.service_title);
+  }
+  
+  // Собираем работы (название + цена + id)
+  const cases = [];
+  const caseRows = document.querySelectorAll('#pricesContainer .case-row');
+  caseRows.forEach((row) => {
+    const name = row.querySelector('.case-name')?.value?.trim() || '';
+    if (!name) return;
+    const existingId = row.querySelector('.case-id')?.value?.trim() || '';
+    cases.push({
+      id: existingId || makeCaseId(name),
+      name,
+      price: row.querySelector('.case-price')?.value?.trim() || '0'
+    });
   });
+  data.cases = cases;
   
   // Отправляем на сервер как JSON
   const url = currentService ? 
@@ -407,6 +458,34 @@ document.addEventListener('keydown', function(event) {
 
 .price-item {
   margin-bottom: 12px;
+}
+
+.case-row {
+  display: grid;
+  grid-template-columns: 1fr 160px 40px;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.btn-add-case {
+  margin-top: 8px;
+}
+
+.btn-remove-case {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: #c82333;
+  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.btn-remove-case:hover {
+  background: #ffe9eb;
 }
 
 .price-item label {

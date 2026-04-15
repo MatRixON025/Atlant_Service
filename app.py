@@ -67,6 +67,7 @@ MESSAGES_PATH = DATA_DIR / "messages.json"
 PRICES_PATH = DATA_DIR / "prices.json"
 VACANCIES_PATH = DATA_DIR / "vacancies.json"
 RESUMES_PATH = DATA_DIR / "resumes.json"
+SERVICES_META_PATH = DATA_DIR / "services_meta.json"
 
 # Service center info (you can update these in templates or here)
 SERVICES_DATA = [
@@ -301,6 +302,9 @@ def ensure_data_dir():
     
     if not RESUMES_PATH.exists():
         RESUMES_PATH.write_text("[]", encoding="utf-8")
+
+    if not SERVICES_META_PATH.exists():
+        SERVICES_META_PATH.write_text('{"last_updated": null}', encoding="utf-8")
 
 
 def load_messages():
@@ -603,6 +607,91 @@ def load_services():
             return SERVICES_DATA
     except (json.JSONDecodeError, FileNotFoundError) as e:
         return SERVICES_DATA
+
+
+def normalize_service_cases(cases_payload):
+    """Normalize editable service cases from admin payload."""
+    if isinstance(cases_payload, str):
+        try:
+            cases_payload = json.loads(cases_payload)
+        except Exception:
+            cases_payload = []
+
+    if not isinstance(cases_payload, list):
+        return []
+
+    normalized_cases = []
+    used_ids = set()
+
+    for item in cases_payload:
+        if not isinstance(item, dict):
+            continue
+
+        name = str(item.get("name", "")).strip()
+        if not name:
+            continue
+
+        raw_case_id = str(item.get("id", "")).strip().lower()
+        if raw_case_id:
+            case_id = "".join(ch if (ch.isalnum() or ch == "_") else "_" for ch in raw_case_id).strip("_")
+        else:
+            case_id = ""
+
+        if not case_id:
+            base = "".join(ch if ch.isalnum() else "_" for ch in name.lower()).strip("_")
+            case_id = base or f"case_{uuid.uuid4().hex[:8]}"
+
+        while case_id in used_ids:
+            case_id = f"{case_id}_{uuid.uuid4().hex[:4]}"
+
+        used_ids.add(case_id)
+
+        price = str(item.get("price", "0")).strip() or "0"
+        normalized_cases.append({
+            "id": case_id,
+            "name": name,
+            "price": price
+        })
+
+    return normalized_cases
+
+
+def load_services_meta():
+    """Load services metadata from JSON file."""
+    ensure_data_dir()
+    try:
+        data = json.loads(SERVICES_META_PATH.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            return data
+    except (json.JSONDecodeError, FileNotFoundError):
+        pass
+    return {"last_updated": None}
+
+
+def save_services_meta(meta):
+    """Save services metadata to JSON file."""
+    ensure_data_dir()
+    SERVICES_META_PATH.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def touch_services_last_updated():
+    """Update services last edited timestamp."""
+    meta = load_services_meta()
+    meta["last_updated"] = datetime.now().isoformat(timespec="seconds")
+    save_services_meta(meta)
+
+
+def get_services_last_updated_display():
+    """Return last edited date in DD.MM.YYYY format."""
+    raw_value = load_services_meta().get("last_updated")
+    if not raw_value:
+        return None
+
+    try:
+        dt = datetime.fromisoformat(raw_value)
+        return dt.strftime("%d.%m.%Y")
+    except ValueError:
+        return None
 
 
 # Initialize data from files
@@ -1066,11 +1155,12 @@ def services():
     services = load_services()  # Загружаем актуальные данные из файла
     prices = load_prices()
     brands = load_brands()  # Загружаем актуальные данные брендов
+    services_last_updated = get_services_last_updated_display()
     pages_content = load_pages_content()
     page_data = pages_content.get('services', {})
     
     # Убедимся, что все данные в UTF-8
-    response = app.make_response(render_template("services.html", services=services, prices=prices, brands=brands, contact=CONTACT, page_content=page_data))
+    response = app.make_response(render_template("services.html", services=services, prices=prices, brands=brands, contact=CONTACT, page_content=page_data, services_last_updated=services_last_updated))
     # Отключаем кеширование для этой страницы
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
@@ -1803,6 +1893,7 @@ def admin_services():
                                     prices[f"case_{service_id}_{case['id']}"] = case_price
                 
                 save_prices(prices)
+                touch_services_last_updated()
                 
                 flash("Ціни успішно оновлено!", "success")
                 return redirect(url_for("admin_services"))
@@ -1813,6 +1904,8 @@ def admin_services():
             service_desc = data.get("service_desc", "").strip()
             service_details = data.get("service_details", "").strip()
             service_items = data.get("items", [])
+            has_service_cases = "cases" in data
+            service_cases = normalize_service_cases(data.get("cases", [])) if has_service_cases else None
             
             if not service_id or not service_title:
                 if request.is_json:
@@ -1831,6 +1924,8 @@ def admin_services():
                     service["desc"] = service_desc
                     service["details"] = service_details
                     service["items"] = service_items
+                    if has_service_cases:
+                        service["non_warranty_cases"] = service_cases
                     service_found = True
                     break
             
@@ -1844,7 +1939,7 @@ def admin_services():
                     "items": service_items,
                     "warranty": [],
                     "non_warranty": [],
-                    "non_warranty_cases": []
+                    "non_warranty_cases": service_cases or []
                 }
                 services.append(new_service)
             
@@ -1858,25 +1953,26 @@ def admin_services():
             # Handle prices for both JSON and form requests
             # Save diagnostic price
             diagnostic_price = data.get("diagnostic_price", "300")
+            prices = {}
+            existing_prices = load_prices()
             try:
-                prices = {}
-                existing_prices = load_prices()
                 prices[f"diagnostic_{service_id}"] = float(diagnostic_price)
             except ValueError:
                 prices[f"diagnostic_{service_id}"] = diagnostic_price
             
-            # Save case prices
-            for key, value in data.items():
-                if key.startswith(f"case_{service_id}_"):
-                    try:
-                        float(value)
-                        prices[key] = value
-                    except ValueError:
-                        prices[key] = value
+            # Replace case prices according to edited service cases
+            if has_service_cases:
+                for key in list(existing_prices.keys()):
+                    if key.startswith(f"case_{service_id}_"):
+                        del existing_prices[key]
+
+                for case in service_cases:
+                    prices[f"case_{service_id}_{case['id']}"] = case.get("price", "0")
             
             # Merge with existing prices
             existing_prices.update(prices)
             save_prices(existing_prices)
+            touch_services_last_updated()
             
             if request.is_json:
                 return jsonify({"success": True, "message": "Послугу та ціни успішно збережено!"})
@@ -1917,6 +2013,8 @@ def admin_services_update(service_id):
         service_title = data.get("service_title", "").strip()
         service_desc = data.get("service_desc", "").strip()
         service_details = data.get("service_details", "").strip()
+        has_service_cases = "cases" in data
+        service_cases = normalize_service_cases(data.get("cases", [])) if has_service_cases else None
         
         if not service_title:
             return jsonify({"success": False, "error": "Заповніть обов'язкові поля!"})
@@ -1930,6 +2028,8 @@ def admin_services_update(service_id):
                 service["title"] = service_title
                 service["desc"] = service_desc
                 service["details"] = service_details
+                if has_service_cases:
+                    service["non_warranty_cases"] = service_cases
                 service_found = True
                 break
         
@@ -1952,18 +2052,19 @@ def admin_services_update(service_id):
         except ValueError:
             prices[f"diagnostic_{service_id}"] = diagnostic_price
         
-        # Save case prices
-        for key, value in data.items():
-            if key.startswith(f"case_{service_id}_"):
-                try:
-                    float(value)
-                    prices[key] = value
-                except ValueError:
-                    prices[key] = value
+        # Replace case prices according to edited service cases
+        if has_service_cases:
+            for key in list(existing_prices.keys()):
+                if key.startswith(f"case_{service_id}_"):
+                    del existing_prices[key]
+
+            for case in service_cases:
+                prices[f"case_{service_id}_{case['id']}"] = case.get("price", "0")
         
         # Merge and save prices
         existing_prices.update(prices)
         save_prices(existing_prices)
+        touch_services_last_updated()
         
         return jsonify({"success": True, "message": "Послугу та ціни успішно збережено!"})
         
@@ -1985,6 +2086,14 @@ def admin_services_delete(service_id):
         ensure_data_dir()
         services_path = DATA_DIR / "services.json"
         services_path.write_text(json.dumps(services, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        # Remove linked price keys for deleted service
+        existing_prices = load_prices()
+        for key in list(existing_prices.keys()):
+            if key == f"diagnostic_{service_id}" or key.startswith(f"case_{service_id}_"):
+                del existing_prices[key]
+        save_prices(existing_prices)
+        touch_services_last_updated()
         
         return jsonify({"success": True, "message": "Послугу видалено!"})
         

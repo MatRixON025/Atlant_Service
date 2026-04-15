@@ -22,17 +22,17 @@
       {
         "id": "technical_act",
         "name": "Оформлення акту технічного стану апаратури (за одиницю техніки)",
-        "price": 300
+        "price": "300"
       },
       {
         "id": "motor_replacement",
         "name": "Заміна мотор-компресора (з заміною фільтра осушувача, заправка фреоном)",
-        "price": 5000
+        "price": "5000"
       },
       {
         "id": "evaporator_replacement",
         "name": "Заміна випарника",
-        "price": 2000
+        "price": "2000"
       },
       {
         "id": "control_board_repair",
@@ -42,32 +42,32 @@
       {
         "id": "fan_replacement",
         "name": "Заміна вентилятора випарника",
-        "price": 800
+        "price": "800"
       },
       {
         "id": "wiring_repair",
         "name": "Ремонт електропроводки",
-        "price": 700
+        "price": "700"
       },
       {
         "id": "condenser_replacement",
         "name": "Заміна конденсатора",
-        "price": 2000
+        "price": "2000"
       },
       {
         "id": "thermostat_replacement",
         "name": "Заміна термостата",
-        "price": 1000
+        "price": "1000"
       },
       {
         "id": "rtc_replacement",
         "name": "Заміна РТК",
-        "price": 1000
+        "price": "1000"
       },
       {
         "id": "heater_replacement",
         "name": "Заміна нагрівача випарника",
-        "price": 1200
+        "price": "1200"
       },
       {
         "id": "door_replacement",
@@ -77,27 +77,27 @@
       {
         "id": "accessories_replacement",
         "name": "Заміна аксесуарів",
-        "price": 800
+        "price": "800"
       },
       {
         "id": "system_repair",
         "name": "Ремонт холодильної системи, не пов'язаний з заміною мотор-компресора і випарника",
-        "price": 3500
+        "price": "3500"
       },
       {
         "id": "false_call",
         "name": "Хибний виклик",
-        "price": 300
+        "price": "300"
       },
       {
         "id": "timer_replacement",
         "name": "Заміна таймера відтайки",
-        "price": 1000
+        "price": "1000"
       },
       {
         "id": "capillary_repair",
         "name": "Усунення засору капілярної трубки випарника",
-        "price": 3500
+        "price": "3500"
       },
       {
         "id": "leak_repair",

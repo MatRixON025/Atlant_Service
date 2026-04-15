@@ -100,12 +100,31 @@
   const NAMEPLATE_INFO_URL = "{{ url_for('nameplate_info') }}";
 
   function appendNameplateRequirement(requirementsDiv) {
+    const existing = requirementsDiv.querySelector('.requirement-item--nameplate');
+    if (existing) {
+      existing.remove();
+    }
+
     const row = document.createElement("div");
     row.className = "requirement-item requirement-item--nameplate";
-    row.innerHTML =
-      '<span class="requirement-icon">🏷️</span><span class="requirement-text"><a href="' +
-      NAMEPLATE_INFO_URL +
-      '" class="requirement-link" target="_blank" rel="noopener noreferrer">Обов\'язково сфотографувати паспортну табличку (шильдик)</a></span>';
+
+    const icon = document.createElement("span");
+    icon.className = "requirement-icon";
+    icon.textContent = "🏷️";
+
+    const textWrap = document.createElement("span");
+    textWrap.className = "requirement-text";
+
+    const link = document.createElement("a");
+    link.href = NAMEPLATE_INFO_URL;
+    link.className = "requirement-link";
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Обов'язково сфотографувати маркувальну табличку (шильдик)";
+
+    textWrap.appendChild(link);
+    row.appendChild(icon);
+    row.appendChild(textWrap);
     requirementsDiv.appendChild(row);
   }
 

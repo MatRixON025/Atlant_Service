@@ -6,9 +6,13 @@
   <div class="container">
     <h1 data-editable-id="services-hero-title">{{ page_content.elements.get('services-hero-title', 'Наші послуги') }}</h1>
     <p data-editable-id="services-hero-subtitle">{{ page_content.elements.get('services-hero-subtitle', 'Професійний ремонт та обслуговування побутової техніки') }}</p>
+   
     <div class="price-notice">
       <strong>Зверніть увагу!</strong> Ціни можуть змінюватися.
       <p>Ціни вказані без урахування вартості запчастин.</p>
+       {% if services_last_updated %}
+      <p class="services-last-updated">Дата останнього оновлення послуг:<strong> {{ services_last_updated }}</strong></p>
+      {% endif %}
     </div>
     {% if session.get('admin_logged_in') %}
     <div style="margin-top: 20px;">
@@ -118,7 +122,7 @@
     row.innerHTML =
       '<span class="requirement-icon">🏷️</span><span class="requirement-text"><a href="' +
       NAMEPLATE_INFO_URL +
-      '" class="requirement-link" target="_blank" rel="noopener noreferrer">Обов\'язково сфотографувати паспортну табличку (шильдик)</a></span>';
+      '" class="requirement-link" target="_blank" rel="noopener noreferrer">Обов\'язково сфотографувати маркувальну табличку (шильдик)</a></span>';
     requirementsDiv.appendChild(row);
   }
 
@@ -402,6 +406,13 @@
 
 .save-btn:active {
   transform: scale(0.95);
+}
+
+.services-last-updated {
+  margin-top: 8px;
+  margin-bottom: 0;
+  color: #1b1d23;
+  font-size: 0.95rem;
 }
 </style>
 
